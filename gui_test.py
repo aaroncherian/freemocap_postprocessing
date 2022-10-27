@@ -3,8 +3,7 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QMainWindow, QSlider, QVBoxLayout, QWidget,QLabel
 from PyQt6.QtWidgets import QApplication  
 
-from pyqtgraph import PlotWidget, plot
-import pyqtgraph as pg
+
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -108,7 +107,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
 
 
-    freemocap_data_folder_path = Path(r'C:\Users\Aaron\FreeMocap_Data')
+    freemocap_data_folder_path = Path(r'D:\freemocap2022\FreeMocap_Data')
     sessionID = 'sesh_2022-09-29_17_29_31'
     data_array_folder = 'DataArrays'
     array_name = 'mediaPipeSkel_3d.npy'
