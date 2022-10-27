@@ -18,6 +18,7 @@ from build_mediapipe_skeleton import build_mediapipe_skeleton, mediapipe_indices
 
 from anthropometric_data import segments, joint_connections, segment_COM_lengths, segment_COM_percentages, build_anthropometric_dataframe
 
+from skeleton_builder_v3 import mediapipe_indices,mediapipe_connections, get_joint_coordinates_from_name,build_skeleton
 
 class MplCanvas(FigureCanvasQTAgg):
 
