@@ -59,11 +59,11 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.label,2,0)
         
         self.initialize_skeleton_plot()
-        #self.initialize_reprojection_error_plots()
+        self.initialize_reprojection_error_plots()
 
         self.slider.valueChanged.connect(self.replot)
         layout.addWidget(self.fig,3,0)
-        #layout.addWidget(self.repro_error_fig,3,1)
+        layout.addWidget(self.repro_error_fig,3,1)
 
         widget = QWidget()
 
@@ -81,16 +81,16 @@ class MainWindow(QMainWindow):
             skeleton_data_folder_path = self.session_folder_path / 'DataArrays'/'mediaPipeSkel_3d.npy'
             skelton_repro_error_data_folder_path = self.session_folder_path / 'DataArrays'/'mediaPipeSkel_reprojErr.npy'
             self.skel3d_data = np.load(skeleton_data_folder_path)
-            #self.skel_repro_error_data = np.load(skelton_repro_error_data_folder_path)
+            self.skel_repro_error_data = np.load(skelton_repro_error_data_folder_path)
 
             self.mediapipe_skeleton = build_skeleton(self.skel3d_data,mediapipe_indices,mediapipe_connections)
 
-            #self.reprojection_error_by_limb_data = sum_reprojection_error_by_limb(self.skel_repro_error_data,mediapipe_indices,reprojection_error_mediapipe_connections)
+            self.reprojection_error_by_limb_data = sum_reprojection_error_by_limb(self.skel_repro_error_data,mediapipe_indices,reprojection_error_mediapipe_connections)
 
             self.num_frames = self.skel3d_data.shape[0]
             self.reset_slider()
             self.reset_skeleton_3d_plot()
-            #self.reset_repro_error_plots()
+            self.reset_repro_error_plots()
 
             
 
@@ -188,10 +188,10 @@ class MainWindow(QMainWindow):
     def replot(self):
         skel_x,skel_y,skel_z = self.get_x_y_z_data()
         self.ax.cla()
-        #self.repro_limb_fig_axes.cla()
+        self.repro_limb_fig_axes.cla()
         self.plot_skel(skel_x,skel_y,skel_z)
-        #self.update_repro_error_sum_vline()
-        #self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
+        self.update_repro_error_sum_vline()
+        self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
         #self.plot_repro_error_sum(self.repro_sum_data)
         self.label.setText(str(self.slider.value()))
 

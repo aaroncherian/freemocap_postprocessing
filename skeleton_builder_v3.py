@@ -2,8 +2,7 @@ from rich.progress import track
 from pathlib import Path
 import numpy as np
 
-mediapipe_indices = 
-    ['nose',
+mediapipe_indices = ['nose',
     'left_eye_inner',
     'left_eye',
     'left_eye_outer',
@@ -37,9 +36,10 @@ mediapipe_indices =
     'left_foot_index',
     'right_foot_index']
 
-mediapipe_connections = 
-    {'shoulders':['left_shoulder','right_shoulder'],
+mediapipe_connections = {'shoulders':['left_shoulder','right_shoulder'],
     'hips':['left_hip','right_hip'],
+    'torso_left': ['left_shoulder','left_hip'],
+    'torso_right':['right_shoulder','right_hip'],
     'left_upper_arm':['left_shoulder','left_elbow'],
     'left_lower_arm':['left_elbow','left_wrist'],
     'left_upper_leg':['left_hip','left_knee'],
@@ -53,6 +53,17 @@ mediapipe_connections =
     'right_lower_leg':['right_knee','right_ankle'],
     'right_heel_connection':['right_ankle','right_heel'],
     'right_foot':['right_heel','right_foot_index']}
+
+reprojection_error_mediapipe_connections = {'left_upper_arm':['left_shoulder','left_elbow'],
+    'left_lower_arm':['left_elbow','left_wrist'],
+    'left_upper_leg':['left_hip','left_knee'],
+    'left_lower_leg':['left_knee','left_ankle'],
+    'left_foot':['left_ankle','left_heel','left_foot_index'],
+    'right_upper_arm':['right_shoulder','right_elbow'],
+    'right_lower_arm':['right_elbow','right_wrist'],
+    'right_upper_leg':['right_hip','right_knee'],
+    'right_lower_leg':['right_knee','right_ankle'],
+    'right_foot':['right_ankle','right_heel','right_foot_index']}
 
 
 def get_joint_coordinates_from_name(frame:int,joint_name:str,pose_estimation_markers,skel_3d_data):
@@ -82,7 +93,49 @@ def build_skeleton(skel_3d_data,pose_estimation_markers,pose_estimation_connecti
 
             this_frame_connection_dict[connection] = this_connection_coordinates
         skeleton_connection_coordinates.append(this_frame_connection_dict)
+
+    return skeleton_connection_coordinates
     f = 2
+
+def get_mediapipe_indices(joint_center:str):
+    return mediapipe_indices.index(joint_center)
+
+def get_reprojection_error_of_joint(joint_center_index:int,frame,skel_repro):
+    return skel_repro[frame,joint_center_index]
+
+def sum_reprojection_error_by_limb(skel_reprojection_error_data,pose_estimation_markers,pose_estimation_repro_limbs):
+    num_frames = skel_reprojection_error_data.shape[0]
+
+    reprojection_error_by_limb = []
+
+    for frame in track(range(num_frames)):
+        this_frame_limb_errors_dict = {}
+
+        for limb in pose_estimation_repro_limbs:
+            reprojection_error_list = []
+            joint_center_list = pose_estimation_repro_limbs[limb]
+            joint_center_indices = list(map(get_mediapipe_indices,joint_center_list))
+
+            reprojection_error_list = [get_reprojection_error_of_joint(x,frame,skel_reprojection_error_data) for x in joint_center_indices]
+            this_frame_limb_errors_dict[limb] = np.nansum(reprojection_error_list)
+        
+        reprojection_error_by_limb.append(this_frame_limb_errors_dict)
+
+    return reprojection_error_by_limb
+    
+    
+
+            #for joint in joint_center_list:
+            #   mediapipe_index = mediapipe_indices.index(joint)
+            #   joint_center_indices.append(mediapipe_index)
+            
+
+      
+
+          
+
+       
+            
 
 
 if __name__ == '__main__':
@@ -93,5 +146,7 @@ if __name__ == '__main__':
 
     data_array_folder_path = freemocap_data_folder_path / sessionID / data_array_folder
     skel3d_raw_data = np.load(data_array_folder_path / array_name)
-
-    build_skeleton(skel3d_raw_data,mediapipe_indices,mediapipe_connections)
+    skel_repro = np.load(data_array_folder_path/'mediaPipeSkel_reprojErr.npy')
+    #build_skeleton(skel3d_raw_data,mediapipe_indices,mediapipe_connections)
+    limb_repro = sum_reprojection_error_by_limb(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
+    f = 2
