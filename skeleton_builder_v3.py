@@ -117,14 +117,48 @@ def sum_reprojection_error_by_limb(skel_reprojection_error_data,pose_estimation_
             joint_center_indices = list(map(get_mediapipe_indices,joint_center_list))
 
             reprojection_error_list = [get_reprojection_error_of_joint(x,frame,skel_reprojection_error_data) for x in joint_center_indices]
-            this_frame_limb_errors_dict[limb] = np.nansum(reprojection_error_list)
+            this_frame_limb_errors_dict[limb] = np.sum(reprojection_error_list)
         
         reprojection_error_by_limb.append(this_frame_limb_errors_dict)
 
     return reprojection_error_by_limb
+
+
+def get_number_of_tracked_markers(skel_reprojection_error_data,pose_estimation_markers):
+    num_frames = skel_reprojection_error_data.shape[0]
+
+    num_tracked_markers = []
+
+    for frame in track(range(num_frames)):
+        this_frame_num_tracked_markers = np.count_nonzero(~np.isnan(skel_reprojection_error_data[frame,0:33]))
+        num_tracked_markers.append(this_frame_num_tracked_markers)
+
+    return num_tracked_markers
+
+
     
+    
+def sum_reprojection_error_by_limb_reformat(skel_reprojection_error_data,pose_estimation_markers,pose_estimation_repro_limbs):
+    num_frames = skel_reprojection_error_data.shape[0]
+
+    reprojection_error_by_limb = {}
+    for limb in pose_estimation_repro_limbs:
+        reprojection_error_by_limb[limb] = []
     
 
+    for frame in track(range(num_frames)):
+
+        for limb in pose_estimation_repro_limbs:
+            reprojection_error_list = []
+            joint_center_list = pose_estimation_repro_limbs[limb]
+            joint_center_indices = list(map(get_mediapipe_indices,joint_center_list))
+
+            reprojection_error_list = [get_reprojection_error_of_joint(x,frame,skel_reprojection_error_data) for x in joint_center_indices]
+            reprojection_error_by_limb[limb].append(np.sum(reprojection_error_list))
+        
+
+
+    return reprojection_error_by_limb
             #for joint in joint_center_list:
             #   mediapipe_index = mediapipe_indices.index(joint)
             #   joint_center_indices.append(mediapipe_index)
@@ -148,5 +182,8 @@ if __name__ == '__main__':
     skel3d_raw_data = np.load(data_array_folder_path / array_name)
     skel_repro = np.load(data_array_folder_path/'mediaPipeSkel_reprojErr.npy')
     #build_skeleton(skel3d_raw_data,mediapipe_indices,mediapipe_connections)
-    limb_repro = sum_reprojection_error_by_limb(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
+    #limb_repro = sum_reprojection_error_by_limb(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
+
+    limb_repro = sum_reprojection_error_by_limb_reformat(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
+    #num_tracked_markers = get_number_of_tracked_markers(skel_repro,mediapipe_indices)
     f = 2

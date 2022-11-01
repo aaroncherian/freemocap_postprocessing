@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication
 
 import matplotlib
 matplotlib.use('Qt5Agg')
+import matplotlib.colors as mcolors
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -151,7 +152,8 @@ class MainWindow(QMainWindow):
     def plot_repro_error_limbs(self,reprojection_error_by_limb_data):
         this_frame_limb_dict = reprojection_error_by_limb_data[self.slider.value()]
         bar_plot_names = this_frame_limb_dict.keys()
-        bar_plot_heights = this_frame_limb_dict.values()
+        bar_plot_heights_with_nans = this_frame_limb_dict.values()
+        bar_plot_heights = [0 if np.isnan(x) else x for x in bar_plot_heights_with_nans]
         self.repro_limb_fig_axes.bar(bar_plot_names,bar_plot_heights)
 
         self.repro_limb_fig_axes.set_ylim([0,70])
@@ -161,6 +163,7 @@ class MainWindow(QMainWindow):
     def plot_skeleton_bones(self):
             frame = self.slider.value()
             this_frame_skeleton_data = self.mediapipe_skeleton[frame]
+           
             for connection in this_frame_skeleton_data.keys():
                 line_start_point = this_frame_skeleton_data[connection][0] 
                 line_end_point = this_frame_skeleton_data[connection][1]
