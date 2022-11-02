@@ -32,8 +32,12 @@ class MplReprojectionErrorCanvas(FigureCanvasQTAgg):
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        self.sum_plot_axes = fig.add_subplot(211)
-        self.limb_plot_axes = fig.add_subplot(212)
+        self.sum_plot_axes = fig.add_subplot(231)
+        self.left_arm_axes = fig.add_subplot(232)
+        self.right_arm_axes = fig.add_subplot(233)
+        self.left_leg_axes = fig.add_subplot(235)
+        self.right_leg_axes = fig.add_subplot(236)
+
         super(MplReprojectionErrorCanvas, self).__init__(fig)
 
 
@@ -101,7 +105,18 @@ class MainWindow(QMainWindow):
     def initialize_reprojection_error_plots(self):
         self.repro_error_fig = MplReprojectionErrorCanvas(self, width=12, height=6, dpi=100)
         self.repro_sum_fig_axes = self.repro_error_fig.figure.axes[0]
-        self.repro_limb_fig_axes = self.repro_error_fig.figure.axes[1]
+        self.left_arm_axes = self.repro_error_fig.figure.axes[1]
+        self.right_arm_axes = self.repro_error_fig.figure.axes[2]
+        self.left_leg_axes = self.repro_error_fig.figure.axes[3]
+        self.right_leg_axes = self.repro_error_fig.figure.axes[4]
+        
+        self.repro_sum_fig_axes.set_title('Number of Tracked Markers')
+        self.left_arm_axes.set_title('Left Arm')
+        self.right_arm_axes.set_title('Right Arm')
+        self.left_leg_axes.set_title('Left Leg')
+        self.right_leg_axes.set_title('Right Leg')
+
+
 
     def initialize_skeleton_plot(self):
         #self.skel_x,self.skel_y,self.skel_z = self.get_x_y_z_data()
@@ -115,7 +130,7 @@ class MainWindow(QMainWindow):
         self.plot_skel(self.skel_x,self.skel_y,self.skel_z)
 
     def reset_repro_error_plots(self):
-        self.repro_limb_fig_axes.cla()
+        #self.repro_limb_fig_axes.cla()
         self.repro_sum_fig_axes.cla()
         self.repro_sum_data = self.get_reprojection_error_sum_data()
         self.plot_tracked_markers(self.tracked_markers)
@@ -156,10 +171,36 @@ class MainWindow(QMainWindow):
 
     def plot_repro_error_limbs(self,reprojection_error_by_limb_data):
 
-        for limb in reprojection_error_by_limb_data:
-            self.repro_limb_fig_axes.plot(reprojection_error_by_limb_data[limb])
+        self.left_arm_axes.plot(reprojection_error_by_limb_data['left_upper_arm'], c = 'r')
+        self.left_arm_axes.plot(reprojection_error_by_limb_data['left_lower_arm'],c = 'b')
+        self.vline_leftarm = self.left_arm_axes.axvline(self.slider.value(), c = 'k')
+
+        self.right_arm_axes.plot(reprojection_error_by_limb_data['right_upper_arm'], c = 'r')
+        self.right_arm_axes.plot(reprojection_error_by_limb_data['right_lower_arm'], c = 'b')
+        self.vline_rightarm = self.right_arm_axes.axvline(self.slider.value(), c = 'k')
+
+        self.left_leg_axes.plot(reprojection_error_by_limb_data['left_upper_leg'], c = 'g')
+        self.left_leg_axes.plot(reprojection_error_by_limb_data['left_lower_leg'],c = 'm')
+        self.left_leg_axes.plot(reprojection_error_by_limb_data['left_foot'], c = 'darkorange')
+        self.vline_leftleg = self.left_leg_axes.axvline(self.slider.value(), c = 'k')
+
+        self.right_leg_axes.plot(reprojection_error_by_limb_data['right_upper_leg'], c = 'g')
+        self.right_leg_axes.plot(reprojection_error_by_limb_data['right_lower_leg'], c = 'm')
+        self.right_leg_axes.plot(reprojection_error_by_limb_data['right_foot'], c = 'darkorange')
+        self.vline_rightleg = self.right_leg_axes.axvline(self.slider.value(), c = 'k')
+
+
+
+        # for limb in reprojection_error_by_limb_data:
+        #     self.repro_limb_fig_axes.plot(reprojection_error_by_limb_data[limb])
         
         self.repro_error_fig.figure.canvas.draw_idle()
+
+    def update_limb_vlines(self):
+        self.vline_leftarm.set_xdata(self.slider.value())
+        self.vline_rightarm.set_xdata(self.slider.value())
+        self.vline_leftleg.set_xdata(self.slider.value())
+        self.vline_rightleg.set_xdata(self.slider.value())
 
     def plot_skeleton_bones(self):
             frame = self.slider.value()
@@ -192,10 +233,11 @@ class MainWindow(QMainWindow):
     def replot(self):
         skel_x,skel_y,skel_z = self.get_x_y_z_data()
         self.ax.cla()
-        self.repro_limb_fig_axes.cla()
+        #self.repro_limb_fig_axes.cla()
         self.plot_skel(skel_x,skel_y,skel_z)
         self.update_repro_error_sum_vline()
-        self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
+        self.update_limb_vlines()
+        #self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
         #self.plot_repro_error_sum(self.repro_sum_data)
         self.label.setText(str(self.slider.value()))
 
