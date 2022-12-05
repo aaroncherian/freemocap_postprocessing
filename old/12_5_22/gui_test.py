@@ -109,11 +109,18 @@ if __name__ == "__main__":
 
     freemocap_data_folder_path = Path(r'D:\freemocap2022\FreeMocap_Data')
     sessionID = 'sesh_2022-09-29_17_29_31'
-    data_array_folder = 'DataArrays'
-    array_name = 'mediaPipeSkel_3d.npy'
+    #data_array_folder = 'DataArrays'
+    #array_name = 'mediaPipeSkel_3d.npy'
 
+    # data_array_folder = 'output_data'
+    # array_name = 'mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy'
+    # data_array_folder_path = freemocap_data_folder_path / sessionID / data_array_folder/'raw_data'
 
+    data_array_folder = 'output_data'
+    array_name = 'mediaPipeSkel_3d_origin_aligned.npy'
     data_array_folder_path = freemocap_data_folder_path / sessionID / data_array_folder
+
+
     skel3d_raw_data = np.load(data_array_folder_path / array_name)
 
     app = QApplication([])

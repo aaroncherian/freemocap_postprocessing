@@ -14,11 +14,10 @@ from matplotlib.figure import Figure
 from pathlib import Path
 import numpy as np
 
-#from build_mediapipe_skeleton import build_mediapipe_skeleton, mediapipe_indices
+from skeleton_builder_v3 import mediapipe_indices,mediapipe_connections,build_skeleton
 
-#from anthropometric_data import segments, joint_connections, segment_COM_lengths, segment_COM_percentages, build_anthropometric_dataframe
 
-from skeleton_builder_v3 import mediapipe_indices,mediapipe_connections,reprojection_error_mediapipe_connections,build_skeleton,sum_reprojection_error_by_limb
+#simplest GUI that just loads the skeleton slider 
 
 class Mpl3DPlotCanvas(FigureCanvasQTAgg):
 
@@ -26,15 +25,6 @@ class Mpl3DPlotCanvas(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111,projection = '3d')
         super(Mpl3DPlotCanvas, self).__init__(fig)
-
-class MplReprojectionErrorCanvas(FigureCanvasQTAgg):
-
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.sum_plot_axes = fig.add_subplot(211)
-        self.limb_plot_axes = fig.add_subplot(212)
-        super(MplReprojectionErrorCanvas, self).__init__(fig)
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,7 +35,6 @@ class MainWindow(QMainWindow):
         layout = QGridLayout()
         print('starting')
         self.session_folder_path = None
-        #self.anthropometric_info_dataframe = build_anthropometric_dataframe(segments,joint_connections,segment_COM_lengths,segment_COM_lengths)
         self.folderOpenButton = QPushButton('Load a session folder',self)
         layout.addWidget(self.folderOpenButton,0,0)
         self.folderOpenButton.clicked.connect(self.open_folder_dialog)
@@ -59,11 +48,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.label,2,0)
         
         self.initialize_skeleton_plot()
-        #self.initialize_reprojection_error_plots()
 
         self.slider.valueChanged.connect(self.replot)
         layout.addWidget(self.fig,3,0)
-        #layout.addWidget(self.repro_error_fig,3,1)
 
         widget = QWidget()
 
@@ -78,14 +65,21 @@ class MainWindow(QMainWindow):
 
         if self.session_folder_path:
             self.session_folder_path = Path(self.session_folder_path)
-            skeleton_data_folder_path = self.session_folder_path / 'DataArrays'/'mediaPipeSkel_3d.npy'
+
+            
+            #data_array_folder = 'output_data'
+            data_array_folder = 'DataArrays'
+            array_name = 'mediaPipeSkel_3d_origin_aligned.npy'
+            #array_name = 'mediaPipeSkel_3d.npy'
+            #array_name = 'mediaPipeSkel_3d_origin_aligned.npy'
+            #array_name = 'mediapipe_3dData_numFrames_numTrackedPoints_spatialXYZ.npy'
+            
+            skeleton_data_folder_path = self.session_folder_path / data_array_folder/array_name
             skelton_repro_error_data_folder_path = self.session_folder_path / 'DataArrays'/'mediaPipeSkel_reprojErr.npy'
             self.skel3d_data = np.load(skeleton_data_folder_path)
-            #self.skel_repro_error_data = np.load(skelton_repro_error_data_folder_path)
+
 
             self.mediapipe_skeleton = build_skeleton(self.skel3d_data,mediapipe_indices,mediapipe_connections)
-
-            #self.reprojection_error_by_limb_data = sum_reprojection_error_by_limb(self.skel_repro_error_data,mediapipe_indices,reprojection_error_mediapipe_connections)
 
             self.num_frames = self.skel3d_data.shape[0]
             self.reset_slider()
@@ -94,14 +88,8 @@ class MainWindow(QMainWindow):
 
             
 
-            
-    def initialize_reprojection_error_plots(self):
-        self.repro_error_fig = MplReprojectionErrorCanvas(self, width=12, height=6, dpi=100)
-        self.repro_sum_fig_axes = self.repro_error_fig.figure.axes[0]
-        self.repro_limb_fig_axes = self.repro_error_fig.figure.axes[1]
 
     def initialize_skeleton_plot(self):
-        #self.skel_x,self.skel_y,self.skel_z = self.get_x_y_z_data()
         self.fig = Mpl3DPlotCanvas(self, width=5, height=4, dpi=100)
         self.ax = self.fig.figure.axes[0]
 
@@ -111,13 +99,6 @@ class MainWindow(QMainWindow):
         self.skel_x,self.skel_y,self.skel_z = self.get_x_y_z_data()
         self.plot_skel(self.skel_x,self.skel_y,self.skel_z)
 
-    def reset_repro_error_plots(self):
-        self.repro_limb_fig_axes.cla()
-        self.repro_sum_fig_axes.cla()
-        self.repro_sum_data = self.get_reprojection_error_sum_data()
-        self.plot_repro_error_sum(self.repro_sum_data)
-        self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
-        f = 2
 
     def reset_slider(self):
         self.slider_max = self.num_frames -1
@@ -139,25 +120,6 @@ class MainWindow(QMainWindow):
 
         self.fig.figure.canvas.draw_idle()
 
-    def plot_repro_error_sum(self,repro_error_sum_data):
-        self.repro_sum_fig_axes.plot(repro_error_sum_data)
-        self.vline = self.repro_sum_fig_axes.axvline(self.slider.value(), c = 'k')
-        self.repro_error_fig.figure.canvas.draw_idle()
-
-    def update_repro_error_sum_vline(self):
-        self.vline.set_xdata(self.slider.value())
-        self.repro_error_fig.figure.canvas.draw()
-
-    def plot_repro_error_limbs(self,reprojection_error_by_limb_data):
-        this_frame_limb_dict = reprojection_error_by_limb_data[self.slider.value()]
-        bar_plot_names = this_frame_limb_dict.keys()
-        bar_plot_heights = this_frame_limb_dict.values()
-        self.repro_limb_fig_axes.bar(bar_plot_names,bar_plot_heights)
-
-        self.repro_limb_fig_axes.set_ylim([0,70])
-        
-        self.repro_error_fig.figure.canvas.draw_idle()
-
     def plot_skeleton_bones(self):
             frame = self.slider.value()
             this_frame_skeleton_data = self.mediapipe_skeleton[frame]
@@ -176,23 +138,10 @@ class MainWindow(QMainWindow):
 
         return skel_x,skel_y,skel_z
 
-    def get_reprojection_error_sum_data(self):
-        repro_error_sum_data = np.empty([self.num_frames,1])
-        for frame in range(self.num_frames):
-            this_frame_sum = np.nansum(self.skel_repro_error_data[frame,0:33])
-            repro_error_sum_data[frame] = this_frame_sum
-        return repro_error_sum_data
-
-
-
     def replot(self):
         skel_x,skel_y,skel_z = self.get_x_y_z_data()
         self.ax.cla()
-        #xsself.repro_limb_fig_axes.cla()
         self.plot_skel(skel_x,skel_y,skel_z)
-        #self.update_repro_error_sum_vline()
-        #self.plot_repro_error_limbs(self.reprojection_error_by_limb_data)
-        #self.plot_repro_error_sum(self.repro_sum_data)
         self.label.setText(str(self.slider.value()))
 
 
@@ -203,10 +152,3 @@ if __name__ == "__main__":
     win = MainWindow()
     win.show()
     app.exec()
-        # logger.info(f"`main` exited with error code: {error_code}")
-        # win.close()
-        # if error_code != EXIT_CODE_REBOOT:
-        #     logger.info(f"Exiting...")
-        #     break
-        # else:
-        #     logger.info("`main` exited with the 'reboot' code, so let's reboot!")
