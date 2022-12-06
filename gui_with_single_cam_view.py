@@ -1,4 +1,3 @@
-gui
 from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget, QApplication, QHBoxLayout,QVBoxLayout
 
 from GUI_widgets.skeleton_view_widget import SkeletonViewWidget
