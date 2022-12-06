@@ -81,6 +81,29 @@ class MultiVideoDisplay(QWidget):
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
 
+        self.videoFolderLoadButton = QPushButton('Load a folder of videos',self)
+        self.videoFolderLoadButton.setEnabled(False)
+        self._layout.addWidget(self.videoFolderLoadButton)
+        self.videoFolderLoadButton.clicked.connect(self.load_video_folder)
+
+        self.are_videos_loaded = False
+
+    def set_session_folder_path(self,session_folder_path:Path):
+        self.session_folder_path = session_folder_path
+
+    def load_video_folder(self):
+        self.folder_diag = QFileDialog()
+        self.video_folder_path  = QFileDialog.getExistingDirectory(None,"Choose a folder of videos")
+        self.list_of_video_paths, self.number_of_videos = self.create_list_of_video_paths(self.video_folder_path)
+        self.generate_video_display(self.list_of_video_paths,self.number_of_videos)
+
+        self.are_videos_loaded = True
+    
+    def create_list_of_video_paths(self,path_to_video_folder:Path):
+        list_of_video_paths = list(Path(path_to_video_folder).glob('*.mp4'))
+        number_of_videos = len(list_of_video_paths)
+        return list_of_video_paths, number_of_videos
+
     def generate_video_display(self,list_of_video_paths:list,number_of_videos:int):
 
         self.video_widget_dictionary = self.generate_video_workers(list_of_video_paths)

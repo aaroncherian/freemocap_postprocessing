@@ -10,27 +10,37 @@ from glob import glob
 import os
 
 class MainWindow(QMainWindow):
-    session_folder_loaded_signal = pyqtSignal()
+    # session_folder_loaded_signal = pyqtSignal()
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("My App")
 
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
 
-        self.folder_open_button = QPushButton('Load a session folder',self)
-        layout.addWidget(self.folder_open_button)
-        self.folder_open_button.clicked.connect(self.open_folder_dialog)
+        slider_and_skeleton_layout = QVBoxLayout()
+
+        # self.folder_open_button = QPushButton('Load a session folder',self)
+        # layout.addWidget(self.folder_open_button)
+        # self.folder_open_button.clicked.connect(self.open_folder_dialog)
 
         self.frame_count_slider = FrameCountSlider()
-        layout.addWidget(self.frame_count_slider)
+        slider_and_skeleton_layout.addWidget(self.frame_count_slider)
+
+        self.skeleton_view_widget = SkeletonViewWidget()
+        self.skeleton_view_widget.setFixedSize(self.skeleton_view_widget.size())
+        slider_and_skeleton_layout.addWidget(self.skeleton_view_widget)
+        
+        layout.addLayout(slider_and_skeleton_layout)
 
         self.multi_video_display = MultiVideoDisplay()
         layout.addWidget(self.multi_video_display)
+            
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
 
         self.connect_signals_to_slots()
 
@@ -50,11 +60,7 @@ class MainWindow(QMainWindow):
 
         f = 2
 
-    def create_list_of_video_paths(self,path_to_video_folder:Path):
 
-        # list_of_paths = os.listdir(path_to_video_folder)
-        self.list_of_video_paths = list(Path(path_to_video_folder).glob('*.mp4'))
-        return self.list_of_video_paths
 
     def open_folder_dialog(self):
         
@@ -83,16 +89,18 @@ class MainWindow(QMainWindow):
         # self.num_frames = self.skel3d_data.shape[0]
         # # self.reset_slider()
         # self.reset_skeleton_3d_plot()
-        self.session_folder_loaded_signal.emit()
+        # self.session_folder_loaded_signal.emit()
         
     
     def connect_signals_to_slots(self):
-        self.session_folder_loaded_signal.connect(lambda: self.create_list_of_video_paths(self.session_folder_path))
-        self.session_folder_loaded_signal.connect(lambda: self.multi_video_display.generate_video_display(self.list_of_video_paths,2))
-        self.session_folder_loaded_signal.connect(lambda: self.frame_count_slider.set_slider_range(100))
-        f = 2
 
-        self.frame_count_slider.slider.valueChanged.connect(lambda: self.multi_video_display.update_display(self.frame_count_slider.slider.value()))
+        self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.frame_count_slider.set_slider_range(self.skeleton_view_widget.num_frames))
+        self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.multi_video_display.videoFolderLoadButton.setEnabled(True))
+        self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.multi_video_display.set_session_folder_path(self.skeleton_view_widget.session_folder_path))
+
+        self.frame_count_slider.slider.valueChanged.connect(lambda: self.skeleton_view_widget.replot(self.frame_count_slider.slider.value()))
+        self.frame_count_slider.slider.valueChanged.connect(lambda: self.multi_video_display.update_display(self.frame_count_slider.slider.value()) if (self.multi_video_display.are_videos_loaded) else None)
+
 
  
 
