@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
     def connect_signals_to_slots(self):
 
         self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.frame_count_slider.set_slider_range(self.skeleton_view_widget.num_frames))
-        self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.multi_video_display.videoFolderLoadButton.setEnabled(True))
+        self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.multi_video_display.video_folder_load_button.setEnabled(True))
         self.skeleton_view_widget.session_folder_loaded_signal.connect(lambda: self.multi_video_display.set_session_folder_path(self.skeleton_view_widget.session_folder_path))
 
         self.frame_count_slider.slider.valueChanged.connect(lambda: self.skeleton_view_widget.replot(self.frame_count_slider.slider.value()))
