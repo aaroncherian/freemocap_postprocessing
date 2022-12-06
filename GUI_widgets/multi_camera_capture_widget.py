@@ -1,7 +1,7 @@
 import cv2
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QFileDialog,QGridLayout
 
 from pathlib import Path
 
@@ -36,42 +36,9 @@ class SingleVideoWorker():
         # self.video_frame.setPixmap(resizeImage)
         return resized_pixmap
         
-    def display_first_frame(self, video_frame_widget, pixmap):
+    def display_frame(self, video_frame_widget, pixmap):
         self.video_frame_widget = video_frame_widget
         self.video_frame_widget.setPixmap(pixmap)
-
-
-
-
-
-
-
-class LoadVideo(QWidget):
-    def __init__(self):
-        super().__init__()
-        self._layout = QVBoxLayout()
-        self.setLayout (self._layout)
-
-        self.videoLoadButton = QPushButton('Load a video',self)
-        self.videoLoadButton.setEnabled(False)
-        self._layout.addWidget(self.videoLoadButton)
-        self.videoLoadButton.clicked.connect(self.load_video)
-
-        self.video_is_loaded = False
-    def set_session_folder_path(self,session_folder_path:Path):
-        self.session_folder_path = session_folder_path
-
-    def load_video(self):
-        self.folder_diag = QFileDialog()
-        self.video_path,filter  = QFileDialog.getOpenFileName(self, 'Open file', directory = str(self.session_folder_path))
-
-        if self.video_path:
-            self.vid_capture_object = cv2.VideoCapture(str(self.video_path))
-            self.video_is_loaded = True
-
-        
-        f = 2
-
 
 
 class MultiVideoDisplay(QWidget):
@@ -85,6 +52,9 @@ class MultiVideoDisplay(QWidget):
         self.videoFolderLoadButton.setEnabled(False)
         self._layout.addWidget(self.videoFolderLoadButton)
         self.videoFolderLoadButton.clicked.connect(self.load_video_folder)
+
+        self.video_display_layout = QGridLayout()
+        self._layout.addLayout(self.video_display_layout)
 
         self.are_videos_loaded = False
 
@@ -125,22 +95,29 @@ class MultiVideoDisplay(QWidget):
     def create_label_widgets_for_videos(self,number_of_videos):
         label_widget_dictionary = {}
         for x in range(number_of_videos):
-            label_widget_dictionary[x] = QLabel('test')
+            label_widget_dictionary[x] = QLabel('Video {}'.format(str(x)))
 
         self.number_of_videos = number_of_videos
         
         return label_widget_dictionary
 
     def add_widgets_to_layout(self):
-
+        column_count = 0
+        row_count = 0
         for widget in self.label_widget_dictionary:
-            self._layout.addWidget(self.label_widget_dictionary[widget])
+            self.video_display_layout.addWidget(self.label_widget_dictionary[widget],row_count,column_count)
 
+            # This section is for formatting the videos in the grid nicely - it fills out two columns and then moves on to the next row
+            column_count +=1
+            if column_count%2 == 0:
+                column_count = 0
+                row_count += 1
+    
     def update_display(self, frame_number:int):
         for x in range(self.number_of_videos):
             this_vid_worker = self.video_widget_dictionary[x]
             this_vid_worker.run_worker(frame_number)
-            this_vid_worker.display_first_frame(self.label_widget_dictionary[x],this_vid_worker.pixmap) 
+            this_vid_worker.display_frame(self.label_widget_dictionary[x],this_vid_worker.pixmap) 
 
 
 
@@ -148,48 +125,4 @@ class MultiVideoDisplay(QWidget):
 
 
 
-
-
-
-class VideoCapture(QWidget):
-    def __init__(self):
-        super().__init__()
-        # self.cap = cv2.VideoCapture(str(filename))
-
-        self._layout = QVBoxLayout()
-        self.setLayout(self._layout)
-
-    
-
-        self.video_loader = LoadVideo()
-        self._layout.addWidget(self.video_loader)
-
-        self.video_frame = QLabel()
-        self._layout.addWidget(self.video_frame)
-        # parent.layout.addWidget(self.video_frame)
-    #
-    def set_frame(self,frame_number:int):
-        self.video_loader.vid_capture_object.set(cv2.CAP_PROP_POS_FRAMES,frame_number)
-        ret, frame = self.video_loader.vid_capture_object.read()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format.Format_RGB888)
-
-        QtGui.QPixmap()
-        pix = QtGui.QPixmap.fromImage(img)
-        resizeImage = pix.scaled(640, 480, Qt.AspectRatioMode.KeepAspectRatio)
-        self.video_frame.setPixmap(resizeImage)
-
-        f = 2
-
-    # def show_frame(self, frame_number: int):
-    #     self.cap.set(2,frame_number)
-    #     ret, frame = self.cap.read()
-    #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    #     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format.Format_RGB888)
-    #
-    #     QtGui.QPixmap()
-    #     pix = QtGui.QPixmap.fromImage(img)
-    #     resizeImage = pix.scaled(640, 480, Qt.AspectRatioMode.KeepAspectRatio)
-    #     self.video_frame.setPixmap(resizeImage)
-    #     f=2
 
