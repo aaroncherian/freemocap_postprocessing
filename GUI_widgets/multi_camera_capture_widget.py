@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QFileDial
 from pathlib import Path
 
 class VideoProcessingWorker():
+    #this is a worker that handles all the video processing stuff - loading the videos as well as grabbing, converting, and displaying frames
     def __init__(self, video_path: Path):
         self.video_path = video_path
         self.video_capture_object = self.load_video_from_path()
