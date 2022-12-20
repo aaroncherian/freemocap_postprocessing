@@ -1,8 +1,8 @@
 
 from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget, QApplication
 
-from GUI_widgets.skeleton_view_widget import SkeletonViewWidget
-from GUI_widgets.slider_widget import FrameCountSlider
+from freemocap_utils.GUI_widgets.skeleton_view_widget import SkeletonViewWidget
+from freemocap_utils.GUI_widgets.slider_widget import FrameCountSlider
 
 
 class MainWindow(QMainWindow):

@@ -1,13 +1,12 @@
 from PyQt6.QtWidgets import QMainWindow, QGridLayout, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QFileDialog
-from PyQt6.QtCore import pyqtSignal
-from GUI_widgets.skeleton_view_widget import SkeletonViewWidget
-from GUI_widgets.slider_widget import FrameCountSlider
-from GUI_widgets.multi_camera_capture_widget import MultiVideoDisplay
+from freemocap_utils.GUI_widgets.skeleton_view_widget import SkeletonViewWidget
+from freemocap_utils.GUI_widgets.slider_widget import FrameCountSlider
+from freemocap_utils.GUI_widgets.multi_camera_capture_widget import MultiVideoDisplay
 
 from pathlib import Path
 from glob import glob
 
-import os
+
 
 class MainWindow(QMainWindow):
     # session_folder_loaded_signal = pyqtSignal()
@@ -31,7 +30,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(slider_and_skeleton_layout)
 
         self.multi_video_display = MultiVideoDisplay()
-        self.multi_video_display.setFixedSize(self.skeleton_view_widget.size()*1.5)
+        # self.multi_video_display.setFixedSize(self.skeleton_view_widget.size()*1.5)
         layout.addWidget(self.multi_video_display)
             
         widget.setLayout(layout)
