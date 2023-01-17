@@ -10,7 +10,7 @@ path_to_session = None
 #path_to_session = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_13_29_22\13_30_53_gmt-5')
 #path_to_session = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_15_47_19\15_50_24_gmt-5')
 
-joint_to_plot = 'left_wrist'
+joint_to_plot = 'right_wrist'
 direction = 0 #x = 0,y = 1, z = 2
 threshold_to_ignore_next_crossing = 5
 
@@ -19,7 +19,7 @@ start_frame = None
 end_frame = None
 
 show_plot = True
-save_data = True
+save_data = False
 
 mediapipe_indices = ['nose',
     'left_eye_inner',
