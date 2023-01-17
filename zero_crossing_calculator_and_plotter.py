@@ -19,7 +19,7 @@ start_frame = None
 end_frame = None
 
 show_plot = True
-save_data = False
+save_data = True
 
 mediapipe_indices = ['nose',
     'left_eye_inner',
@@ -66,20 +66,18 @@ else:
 
 joint_velocity = np.diff(joint_position,axis = 0)
 zero_crossings_frames = np.where(np.diff(np.sign(joint_velocity[:,direction])))[0]
-#zero_crossings_frames = zero_crossings_frames + 1 
-
 thresholded_zero_crossings_frames = list(zero_crossings_frames.copy())
 
-
+#this section does the thresholding/frame ignoring 
 for count,frame in enumerate(thresholded_zero_crossings_frames):
     frames_to_filter_out = np.array(range(frame+1,frame+threshold_to_ignore_next_crossing))
     thresholded_zero_crossings_frames = np.setdiff1d(thresholded_zero_crossings_frames,frames_to_filter_out)
     f = 2
 
-slopes_of_lines = np.diff(np.sign(joint_velocity[:,direction]))[thresholded_zero_crossings_frames]
 
-signs_of_lines = slopes_of_lines.copy()
+slopes_of_lines = np.diff(np.sign(joint_velocity[:,direction]))[thresholded_zero_crossings_frames] #get the np.diff values that tell us the signs of the lines
 
+signs_of_lines = slopes_of_lines.copy() #the np.diff values can be greater than 1, so this section just makes an array where the numbers are either -1 or 1 
 for element in range(len(slopes_of_lines)):
     slope = int(slopes_of_lines[element])
     if slope > 0:
