@@ -6,8 +6,8 @@ import pandas as pd
 
 from pathlib import Path
 
-
-path_to_session = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_13_29_22\13_30_53_gmt-5')
+path_to_session = None
+#path_to_session = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_13_29_22\13_30_53_gmt-5')
 #path_to_session = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_15_47_19\15_50_24_gmt-5')
 
 joint_to_plot = 'left_wrist'
@@ -110,7 +110,7 @@ if show_plot == True:
 
 if save_data == True:
 
-    if start_frame is not None: #need to adjust for the starting frame if you choose a later start
+    if start_frame is not None: #need to adjust all of the zero crossing frames by the starting frame, if you choose a later starting frame 
         thresholded_zero_crossings_frames = thresholded_zero_crossings_frames + start_frame
 
     zero_crossing_frames_and_line_slopes = np.array([thresholded_zero_crossings_frames,signs_of_lines])
