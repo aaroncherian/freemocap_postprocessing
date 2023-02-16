@@ -39,8 +39,8 @@ class VideoProcessingWorker():
         
     def display_frame(self, video_frame_widget, pixmap):
         #display the frame in the video label widget
-        self.video_frame_widget = video_frame_widget
-        self.video_frame_widget.setPixmap(pixmap)
+
+        video_frame_widget.setPixmap(pixmap)
 
 
 class MultiVideoDisplay(QWidget):
