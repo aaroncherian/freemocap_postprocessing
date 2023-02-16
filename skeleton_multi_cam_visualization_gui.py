@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         widget = QWidget()
 
         slider_and_skeleton_layout = QVBoxLayout()
-
+    
         self.frame_count_slider = FrameCountSlider()
         slider_and_skeleton_layout.addWidget(self.frame_count_slider)
 

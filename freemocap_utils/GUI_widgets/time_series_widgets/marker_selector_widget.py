@@ -15,14 +15,11 @@ class MarkerSelectorWidget(QWidget):
         
         combo_box_items = mediapipe_indices
         # combo_box_items.insert(0,'')
-
         self.marker_combo_box = QComboBox()
         self.marker_combo_box.addItems(combo_box_items)
         self._layout.addWidget(self.marker_combo_box)
 
         self.current_marker = self.marker_combo_box.currentText()
-        self.return_marker() #immediately plot the nose marker
-
         self.marker_combo_box.currentTextChanged.connect(self.return_marker)
 
     def return_marker(self):
