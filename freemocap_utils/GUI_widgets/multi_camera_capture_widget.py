@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QFileDialog,QGridLayout
 
 from pathlib import Path
+from PyQt6.QtCore import pyqtSignal
+
 
 class VideoProcessingWorker():
     #this is a worker that handles all the video processing stuff - loading the videos as well as grabbing, converting, and displaying frames
@@ -44,6 +46,7 @@ class VideoProcessingWorker():
 
 
 class MultiVideoDisplay(QWidget):
+    videos_loaded_signal = pyqtSignal()
     def __init__(self):
         super().__init__()
 
@@ -70,7 +73,8 @@ class MultiVideoDisplay(QWidget):
         self.list_of_video_paths, self.number_of_videos = self.create_list_of_video_paths(self.video_folder_path)
         self.generate_video_display(self.list_of_video_paths,self.number_of_videos)
 
-        self.are_videos_loaded = True 
+        self.are_videos_loaded = True
+        self.videos_loaded_signal.emit() 
     
     def create_list_of_video_paths(self,path_to_video_folder:Path):
         #search the folder for 'mp4' files and create a list of them 
