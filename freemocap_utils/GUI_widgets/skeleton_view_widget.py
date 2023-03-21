@@ -42,9 +42,10 @@ class SkeletonViewWidget(QWidget):
             self.session_folder_path = Path(self.session_folder_path)
 
         
-        #data_array_folder = 'output_data'
-        data_array_folder = 'DataArrays'
-        array_name = 'mediaPipeSkel_3d_origin_aligned.npy'
+        data_array_folder = 'output_data'
+        array_name = 'mediapipe3dData_numFrames_numTrackedPoints_spatialXYZ.npy'
+        # data_array_folder = 'DataArrays'
+        # array_name = 'mediaPipeSkel_3d_origin_aligned.npy'
         #array_name = 'mediapipe_body_3d_xyz.npy'
         #array_name = 'mediaPipeSkel_3d.npy'
         #array_name = 'mediaPipeSkel_3d_origin_aligned.npy'

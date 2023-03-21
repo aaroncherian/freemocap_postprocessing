@@ -1,0 +1,176 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from pathlib import Path\n",
+    "import numpy as np\n",
+    "\n",
+    "from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QVBoxLayout\n",
+    "\n",
+    "import matplotlib\n",
+    "matplotlib.use('Qt5Agg')\n",
+    "\n",
+    "from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar\n",
+    "from matplotlib.figure import Figure\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "tags": [
+     "parameters"
+    ]
+   },
+   "outputs": [],
+   "source": [
+    "path_to_session = None"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "path_to_session = Path(path_to_session)\n",
+    "path_to_center_of_mass_npy = path_to_session/'output_data'/'center_of_mass'/'total_body_center_of_mass_xyz.npy'\n",
+    "total_body_com_data = np.load(path_to_center_of_mass_npy)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "\n",
+    "class TimeSeriesPlotCanvas(FigureCanvasQTAgg):\n",
+    "\n",
+    "    def __init__(self, parent=None, width=15, height=4, dpi=100):\n",
+    "        self.fig = Figure(figsize=(width, height), dpi=dpi)\n",
+    "        self.x_ax = self.fig.add_subplot(311)\n",
+    "        self.y_ax = self.fig.add_subplot(312)\n",
+    "        self.z_ax = self.fig.add_subplot(313)\n",
+    "\n",
+    "        super(TimeSeriesPlotCanvas, self).__init__(self.fig)\n",
+    "\n",
+    "class TimeSeriesPlotterWidget(QWidget):\n",
+    "\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "\n",
+    "        self._layout = QVBoxLayout()\n",
+    "        self.setLayout(self._layout)\n",
+    "\n",
+    "        self.fig, self.axes_list = self.initialize_skeleton_plot()\n",
+    "\n",
+    "        toolbar = NavigationToolbar(self.fig, self)\n",
+    "\n",
+    "        self._layout.addWidget(toolbar)\n",
+    "        self._layout.addWidget(self.fig)\n",
+    "\n",
+    "    def initialize_skeleton_plot(self):\n",
+    "        fig = TimeSeriesPlotCanvas(self, width=15, height=10, dpi=100)\n",
+    "        self.x_ax = fig.figure.axes[0]\n",
+    "        self.y_ax = fig.figure.axes[1]\n",
+    "        self.z_ax = fig.figure.axes[2]\n",
+    "\n",
+    "        self.axes_list = [self.x_ax,self.y_ax,self.z_ax]\n",
+    "        return fig, self.axes_list\n",
+    "\n",
+    "\n",
+    "    def update_plot(self,freemocap_data:np.ndarray):\n",
+    "\n",
+    "\n",
+    "        axes_names = ['X Axis (mm)', 'Y Axis (mm)', 'Z Axis (mm)']\n",
+    "\n",
+    "        for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):\n",
+    "\n",
+    "            ax.cla()\n",
+    "            ax.plot(freemocap_data[:,dimension], label = 'FreeMoCap COM', alpha = .7)\n",
+    "\n",
+    "            ax.set_ylabel(ax_name)\n",
+    "            \n",
+    "            if dimension == 2: #put the xlabel only on the last plot\n",
+    "                ax.set_xlabel('Frame #')\n",
+    "\n",
+    "            # ax.legend()\n",
+    "        self.fig.fig.suptitle('Center of Mass Position vs. Frame')\n",
+    "        self.fig.fig.figure.canvas.draw_idle()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "\n",
+    "class CenterOfMassPlotWindow(QMainWindow):\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "    \n",
+    "        layout = QVBoxLayout()\n",
+    "        widget = QWidget()\n",
+    "\n",
+    "        self.time_series_viewer = TimeSeriesPlotterWidget()\n",
+    "        layout.addWidget(self.time_series_viewer)\n",
+    "\n",
+    "        widget.setLayout(layout)\n",
+    "        self.setCentralWidget(widget)\n",
+    "\n",
+    "        self.time_series_viewer.update_plot(freemocap_data=total_body_com_data)\n",
+    "\n",
+    "\n",
+    "app = QApplication([])\n",
+    "win = CenterOfMassPlotWindow()\n",
+    "win.show()\n",
+    "app.exec()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "validation_req_test",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  },
+  "orig_nbformat": 4
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

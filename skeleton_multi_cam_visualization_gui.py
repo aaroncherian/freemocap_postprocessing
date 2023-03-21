@@ -15,7 +15,6 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("My App")
 
-
         layout = QHBoxLayout()
         widget = QWidget()
 
