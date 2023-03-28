@@ -1,6 +1,6 @@
 import papermill as pm
 
-path_to_session = r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-03-20_13_58_15\recording_14_06_10_gmt-4'
+path_to_session = r'C:\Users\aaron\FreeMocap_Data\recording_sessions\session_2023-01-17_15_47_19\15_50_24_gmt-5'
 
 res = pm.execute_notebook(
     'com_timeseries_plotter.ipynb',
