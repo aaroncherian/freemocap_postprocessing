@@ -79,7 +79,7 @@ def build_skeleton(skel_3d_data,pose_estimation_markers,pose_estimation_connecti
 
     skeleton_connection_coordinates = []
 
-    for frame in track(range(num_frames)):
+    for frame in track(range(num_frames), 'Building Mediapipe Skeleton'):
         this_frame_connection_dict = {}
         for connection in pose_estimation_connections:
             
