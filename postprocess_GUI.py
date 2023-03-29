@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
@@ -28,20 +28,15 @@ class MainWindow(QMainWindow):
         self.frame_count_slider = FrameCountSlider(num_frames)
         layout.addWidget(self.frame_count_slider)
 
-        viewer_layout = QHBoxLayout()
+        progress_led_name_list = ['interpolating', 'filtering', 'plotting']
+        self.progress_led_dict, led_layout = self.create_led_indicators(progress_led_name_list)
+        layout.addLayout(led_layout)
 
+        viewer_layout = QHBoxLayout()
         self.raw_skeleton_viewer = SkeletonViewWidget()
         viewer_layout.addWidget(self.raw_skeleton_viewer)
         self.processed_skeleton_viewer = SkeletonViewWidget()
         viewer_layout.addWidget(self.processed_skeleton_viewer)
-
-        progress_led_name_list = ['interpolation', 'filtering', 'plotting']
-
-        self.progress_led_dict = self.create_led_indicators(progress_led_name_list)
-    
-        for led_name in self.progress_led_dict.keys():
-            layout.addWidget(self.progress_led_dict[led_name])
-
         layout.addLayout(viewer_layout)
 
         main_tree = self.create_main_page_parameter_tree()
@@ -58,18 +53,27 @@ class MainWindow(QMainWindow):
         self.process_button.clicked.connect(self.postprocess_data)
         layout.addWidget(self.process_button)
 
-        #self.postprocess_data()
-
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
-
+    
     def create_led_indicators(self, progress_led_name_list):
-
         progress_led_dict = {}
-        for led_name in progress_led_name_list:
-            progress_led_dict[led_name] = LEDIndicator()
 
-        return progress_led_dict
+        led_layout = QVBoxLayout()
+
+        for led_name in progress_led_name_list:
+            led_indicator = LEDIndicator()
+            progress_led_dict[led_name] = led_indicator
+
+            led_label = QLabel(led_name.capitalize())
+
+            led_item_layout = QHBoxLayout()
+            led_item_layout.addWidget(led_indicator)
+            led_item_layout.addWidget(led_label)
+
+            led_layout.addLayout(led_item_layout)
+
+        return progress_led_dict, led_layout
 
     def create_main_page_parameter_tree(self):
         main_tree = ParameterTree()
@@ -78,7 +82,6 @@ class MainWindow(QMainWindow):
 
         return main_tree
 
-    
     def update_viewer_plots(self):
         self.raw_skeleton_viewer.replot(self.frame_count_slider.slider.value())
 
@@ -95,26 +98,7 @@ class MainWindow(QMainWindow):
                 values[child.name()] = child.value()
         return values
         
-    # def postprocess_data(self):
-
-        # interpolated_skeleton = self.interpolate_skeleton()
-        # time.sleep(5)
-
-        # interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        # interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'], led_indicator = self.progress_led_dict['interpolation'])
-        # self.progress_led_dict['interpolation'].set_color(1,88,91)
-        # #time.sleep(2)
-
-        # filter_values_dict = self.get_all_parameter_values(filter_params)
-        # filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
-        # self.progress_led_dict['filtering'].set_color(1,88,91)
-
-        # self.processed_skeleton_viewer.load_skeleton(filtered_skeleton)
-        # self.progress_led_dict['plotting'].set_color(1,88,91)
-        #f = 2
-
     def postprocess_data(self):
-
         for led_indicator in self.progress_led_dict.values():
             led_indicator.set_unfinished_process_color()
 
@@ -127,17 +111,9 @@ class MainWindow(QMainWindow):
         self.processed_skeleton_viewer.load_skeleton(result)
         self.update_led_color('plotting')
 
-
     def update_led_color(self, task):
         if task in self.progress_led_dict:
             self.progress_led_dict[task].set_finished_process_color()
-            
-    def interpolate_skeleton(self):
-        interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'], led_indicator = self.progress_led_dict['interpolation'])
-        return interpolated_skeleton
-
-
 class WorkerThread(QThread):
     progress_signal = pyqtSignal(str)
     result_signal = pyqtSignal(object)   
@@ -148,7 +124,7 @@ class WorkerThread(QThread):
         
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
         interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
-        self.progress_signal.emit('interpolation')
+        self.progress_signal.emit('interpolating')
        
         filter_values_dict = self.get_all_parameter_values(filter_params)
         filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
