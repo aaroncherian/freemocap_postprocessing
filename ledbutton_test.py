@@ -37,7 +37,7 @@ class LEDIndicator(QWidget):
         painter.drawEllipse(self.rect().center(), diameter / 2, diameter / 2)
 
         # Add a subtle border to the LED circle
-        border_color = QColor(71,71,71)
+        border_color = self.color.lighter(150)
         border_rect = QRect(0, 0, diameter, diameter)
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.setPen(QPen(border_color, 1))

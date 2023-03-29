@@ -116,7 +116,7 @@ class MainWindow(QMainWindow):
     def postprocess_data(self):
 
         for led_indicator in self.progress_led_dict.values():
-            led_indicator.set_color(255,68,0)
+            led_indicator.set_unfinished_process_color()
 
         self.worker_thread = WorkerThread()
         self.worker_thread.progress_signal.connect(self.update_led_color)
@@ -130,7 +130,7 @@ class MainWindow(QMainWindow):
 
     def update_led_color(self, task):
         if task in self.progress_led_dict:
-            self.progress_led_dict[task].set_color(1,88,91)
+            self.progress_led_dict[task].set_finished_process_color()
             
     def interpolate_skeleton(self):
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
