@@ -2,6 +2,8 @@ from pathlib import Path
 import numpy as np
 
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton
+from PyQt6.QtCore import QThread, pyqtSignal
+
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
 from freemocap_utils.postprocessing_widgets.skeleton_view_widget import SkeletonViewWidget
 
@@ -10,6 +12,10 @@ from freemocap_utils.postprocessing_widgets.postprocessing_functions.interpolate
 from freemocap_utils.postprocessing_widgets.postprocessing_functions.filter_data import filter_skeleton_data
 
 from pyqtgraph.parametertree import ParameterTree
+
+from ledbutton_test import LEDIndicator
+
+import time
 
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
@@ -28,6 +34,14 @@ class MainWindow(QMainWindow):
         viewer_layout.addWidget(self.raw_skeleton_viewer)
         self.processed_skeleton_viewer = SkeletonViewWidget()
         viewer_layout.addWidget(self.processed_skeleton_viewer)
+
+        progress_led_name_list = ['interpolation', 'filtering', 'plotting']
+
+        self.progress_led_dict = self.create_led_indicators(progress_led_name_list)
+    
+        for led_name in self.progress_led_dict.keys():
+            layout.addWidget(self.progress_led_dict[led_name])
+
         layout.addLayout(viewer_layout)
 
         main_tree = self.create_main_page_parameter_tree()
@@ -48,6 +62,14 @@ class MainWindow(QMainWindow):
 
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
+
+    def create_led_indicators(self, progress_led_name_list):
+
+        progress_led_dict = {}
+        for led_name in progress_led_name_list:
+            progress_led_dict[led_name] = LEDIndicator()
+
+        return progress_led_dict
 
     def create_main_page_parameter_tree(self):
         main_tree = ParameterTree()
@@ -73,18 +95,78 @@ class MainWindow(QMainWindow):
                 values[child.name()] = child.value()
         return values
         
+    # def postprocess_data(self):
 
+        # interpolated_skeleton = self.interpolate_skeleton()
+        # time.sleep(5)
+
+        # interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
+        # interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'], led_indicator = self.progress_led_dict['interpolation'])
+        # self.progress_led_dict['interpolation'].set_color(1,88,91)
+        # #time.sleep(2)
+
+        # filter_values_dict = self.get_all_parameter_values(filter_params)
+        # filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
+        # self.progress_led_dict['filtering'].set_color(1,88,91)
+
+        # self.processed_skeleton_viewer.load_skeleton(filtered_skeleton)
+        # self.progress_led_dict['plotting'].set_color(1,88,91)
+        #f = 2
 
     def postprocess_data(self):
+
+        for led_indicator in self.progress_led_dict.values():
+            led_indicator.set_color(255,68,0)
+
+        self.worker_thread = WorkerThread()
+        self.worker_thread.progress_signal.connect(self.update_led_color)
+        self.worker_thread.result_signal.connect(self.handle_plotting)
+        self.worker_thread.start()
+
+    def handle_plotting(self,result):
+        self.processed_skeleton_viewer.load_skeleton(result)
+        self.update_led_color('plotting')
+
+
+    def update_led_color(self, task):
+        if task in self.progress_led_dict:
+            self.progress_led_dict[task].set_color(1,88,91)
+            
+    def interpolate_skeleton(self):
+        interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
+        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'], led_indicator = self.progress_led_dict['interpolation'])
+        return interpolated_skeleton
+
+
+class WorkerThread(QThread):
+    progress_signal = pyqtSignal(str)
+    result_signal = pyqtSignal(object)   
+
+    def run(self):
+        # Simulate time-consuming tasks
+
+        
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
         interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
-
+        self.progress_signal.emit('interpolation')
+       
         filter_values_dict = self.get_all_parameter_values(filter_params)
         filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
+        self.progress_signal.emit('filtering')
+        
+        processed_skeleton = filtered_skeleton
+        #self.processed_skeleton_viewer.load_skeleton(filtered_skeleton)
+        self.result_signal.emit(processed_skeleton)
 
-        self.processed_skeleton_viewer.load_skeleton(filtered_skeleton)
-        f = 2
-             
+    def get_all_parameter_values(self,parameter_object):
+        values = {}
+        for child in parameter_object.children(): #using this just to access the second level of the parameter tree
+            if child.hasChildren():
+                for grandchild in child.children():
+                    values[grandchild.name()] = grandchild.value()
+            else:
+                values[child.name()] = child.value()
+        return values
 
 if __name__ == "__main__":
     

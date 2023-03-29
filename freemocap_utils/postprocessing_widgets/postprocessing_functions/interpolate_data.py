@@ -3,7 +3,7 @@ import pandas as pd
 from rich.progress import track
 
 
-def interpolate_skeleton_data(skeleton_data:np.ndarray, method_to_use = 'linear') -> np.ndarray:
+def interpolate_skeleton_data(skeleton_data:np.ndarray, method_to_use = 'linear', led_indicator = None) -> np.ndarray:
     """ Takes in a 3d skeleton numpy array from freemocap and interpolates missing NaN values"""
     num_frames = skeleton_data.shape[0]
     num_markers = skeleton_data.shape[1]
@@ -19,6 +19,9 @@ def interpolate_skeleton_data(skeleton_data:np.ndarray, method_to_use = 'linear'
         this_marker_interpolated_skel3d_array = np.where(np.isfinite(this_marker_interpolated_skel3d_array), this_marker_interpolated_skel3d_array, np.nanmean(this_marker_interpolated_skel3d_array))
         
         freemocap_interpolated_data[:,marker,:] = this_marker_interpolated_skel3d_array
+
+    if led_indicator:
+        led_indicator.set_color(1,88,91)
 
     return freemocap_interpolated_data
         
