@@ -50,10 +50,9 @@ class LEDIndicator(QWidget):
 
 
 class LedContainer(QWidget):
-    def __init__(self):
+    def __init__(self, task_list):
         super().__init__()
-        
-        self.task_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
+        self.task_list = task_list
         self.layout = QHBoxLayout()
 
     def create_led_indicators(self):

@@ -26,7 +26,7 @@ import time
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
-
+        self.task_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
         layout = QVBoxLayout()
         widget = QWidget()
 
@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         self.frame_count_slider = FrameCountSlider(num_frames)
         layout.addWidget(self.frame_count_slider)
 
-        self.led_container = LedContainer()
+        self.led_container = LedContainer(self.task_list)
         self.progress_led_dict, led_layout = self.led_container.create_led_indicators()
         layout.addLayout(led_layout)
 
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         self.worker_thread.start()
         self.worker_thread.task_running_signal.connect(self.handle_task_started)
         self.worker_thread.task_completed_signal.connect(self.handle_task_completed)
-        self.worker_thread.result_signal.connect(self.handle_plotting)
+        self.worker_thread.all_tasks_finished_signal.connect(self.handle_plotting)
 
     def handle_task_started(self,task):
         self.led_container.change_led_to_task_is_running_color(task)
@@ -98,10 +98,19 @@ class MainWindow(QMainWindow):
         if task == 'finding good frame':
             self.good_frame_entry.good_frame_checkbox.setChecked(False)
             self.good_frame_entry.good_frame_entry.setText(str(result))
+        
+        if task == 'filtering':
+            self.filtered_skeleton = result
+            self.processed_skeleton = self.filtered_skeleton
+        
+        if task == 'rotating skeleton': 
+            self.rotated_skeleton = result
+            self.processed_skeleton = self.rotated_skeleton
+
         self.led_container.change_led_to_task_is_finished_color(task)
 
-    def handle_plotting(self,result):
-        self.skeleton_viewers_container.plot_processed_skeleton(result)
+    def handle_plotting(self):
+        self.skeleton_viewers_container.plot_processed_skeleton(self.processed_skeleton)
         self.handle_task_completed('plotting')
 
 
@@ -165,7 +174,7 @@ class RotationCheckBox(QWidget):
 class WorkerThread(QThread):
     task_running_signal = pyqtSignal(str)
     task_completed_signal = pyqtSignal(str, object)
-    result_signal = pyqtSignal(object) 
+    all_tasks_finished_signal = pyqtSignal() 
     def __init__(self, run_rotate_skeletons = True, good_frame = None):
         super().__init__()
         self.good_frame = good_frame
@@ -181,8 +190,7 @@ class WorkerThread(QThread):
         self.task_running_signal.emit('filtering')
         filter_values_dict = self.get_all_parameter_values(filter_params)
         filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
-        processed_skeleton= filtered_skeleton
-        self.task_completed_signal.emit('filtering', None)
+        self.task_completed_signal.emit('filtering', filtered_skeleton)
 
         if not self.good_frame:
             self.task_running_signal.emit('finding good frame')
@@ -193,11 +201,9 @@ class WorkerThread(QThread):
         if self.run_rotate_skeletons:
             self.task_running_signal.emit('rotating skeleton')
             origin_aligned_skeleton = align_skeleton_with_origin(filtered_skeleton,mediapipe_indices,self.good_frame)[0]
-            processed_skeleton= origin_aligned_skeleton
-            self.task_completed_signal.emit('rotating skeleton', None)
+            self.task_completed_signal.emit('rotating skeleton', origin_aligned_skeleton)
         
-        
-        self.result_signal.emit(processed_skeleton)
+        self.all_tasks_finished_signal.emit()
 
     def get_all_parameter_values(self,parameter_object):
         values = {}
