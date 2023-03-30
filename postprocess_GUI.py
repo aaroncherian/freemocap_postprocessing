@@ -13,11 +13,13 @@ from freemocap_utils.postprocessing_widgets.postprocessing_functions.filter_data
 from freemocap_utils.postprocessing_widgets.postprocessing_functions.good_frame_finder import find_good_frame
 from freemocap_utils.postprocessing_widgets.postprocessing_functions.rotate_skeleton import align_skeleton_with_origin
 
+from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
+
 from freemocap_utils.mediapipe_skeleton_builder import mediapipe_indices
 
 from pyqtgraph.parametertree import ParameterTree
 
-from ledbutton_test import LEDIndicator
+from freemocap_utils.postprocessing_widgets.led_indicator_widget import LEDIndicator
 
 import time
 
@@ -36,12 +38,14 @@ class MainWindow(QMainWindow):
         self.progress_led_dict, led_layout = self.create_led_indicators(progress_led_name_list)
         layout.addLayout(led_layout)
 
-        viewer_layout = QHBoxLayout()
-        self.raw_skeleton_viewer = SkeletonViewWidget()
-        viewer_layout.addWidget(self.raw_skeleton_viewer)
-        self.processed_skeleton_viewer = SkeletonViewWidget()
-        viewer_layout.addWidget(self.processed_skeleton_viewer)
-        layout.addLayout(viewer_layout)
+        # viewer_layout = QHBoxLayout()
+        # self.raw_skeleton_viewer = SkeletonViewWidget()
+        # viewer_layout.addWidget(self.raw_skeleton_viewer)
+        # self.processed_skeleton_viewer = SkeletonViewWidget()
+        # viewer_layout.addWidget(self.processed_skeleton_viewer)
+        # layout.addLayout(viewer_layout)
+        self.skeleton_viewers_container = SkeletonViewersContainer()
+        layout.addWidget(self.skeleton_viewers_container)
 
         main_tree = self.create_main_page_parameter_tree()
         layout.addWidget(main_tree)
@@ -57,7 +61,8 @@ class MainWindow(QMainWindow):
 
         self.connect_signals_to_slots()
 
-        self.raw_skeleton_viewer.load_skeleton(freemocap_raw_data)
+        # self.raw_skeleton_viewer.load_skeleton(freemocap_raw_data)
+        self.skeleton_viewers_container.plot_raw_skeleton(freemocap_raw_data)
 
         self.process_button = QPushButton('Process Data')
         self.process_button.clicked.connect(self.postprocess_data)
@@ -65,7 +70,7 @@ class MainWindow(QMainWindow):
 
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
-    
+        
     def create_led_indicators(self, progress_led_name_list):
         progress_led_dict = {}
 
@@ -95,10 +100,10 @@ class MainWindow(QMainWindow):
         return main_tree
 
     def update_viewer_plots(self):
-        self.raw_skeleton_viewer.replot(self.frame_count_slider.slider.value())
-
-        if self.processed_skeleton_viewer.skeleton_loaded:
-            self.processed_skeleton_viewer.replot(self.frame_count_slider.slider.value())
+        self.skeleton_viewers_container.update_raw_viewer_plot(self.frame_count_slider.slider.value())
+        self.skeleton_viewers_container.update_processed_viewer_plot(self.frame_count_slider.slider.value())
+        # self.skeleton_viewer_widget.update_raw_viewer_plot(self.frame_count_slider.slider.value())
+        # self.skeleton_viewer_widget.update_processed_viewer_plot(self.frame_count_slider.slider.value())
 
     def get_all_parameter_values(self,parameter_object):
         values = {}
@@ -122,13 +127,15 @@ class MainWindow(QMainWindow):
             
         rotate_skeleton_bool = self.rotation_check.rotation_checkbox.isChecked()
         self.worker_thread = WorkerThread(good_frame = self.good_frame, run_rotate_skeletons=rotate_skeleton_bool)
+        self.worker_thread.start()
         self.worker_thread.starting_signal.connect(self.update_process_starting_color)
         self.worker_thread.finished_signal.connect(self.update_process_finished_color)
         self.worker_thread.result_signal.connect(self.handle_plotting)
-        self.worker_thread.start()
+
 
     def handle_plotting(self,result):
-        self.processed_skeleton_viewer.load_skeleton(result)
+        self.skeleton_viewers_container.plot_processed_skeleton(result)
+        # self.processed_skeleton_viewer.load_skeleton(result)
         self.update_process_finished_color('plotting')
 
     def update_process_starting_color(self,task):

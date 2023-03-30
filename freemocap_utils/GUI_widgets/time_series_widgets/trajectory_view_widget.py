@@ -11,6 +11,7 @@ from freemocap_utils.mediapipe_skeleton_builder import mediapipe_indices
 
 import numpy as np
 
+
 class TimeSeriesPlotCanvas(FigureCanvasQTAgg):
 
     def __init__(self, parent=None, width=15, height=4, dpi=100):
@@ -50,22 +51,32 @@ class TimeSeriesPlotterWidget(QWidget):
         return mediapipe_index
     
 
-    def update_plot(self,marker_to_plot:str, freemocap_data:np.ndarray):
-        mediapipe_index = self.get_mediapipe_indices(marker_to_plot)
-
+    def update_plot(self,marker_to_plot:str, freemocap_data:np.ndarray, freemocap_com_data:np.ndarray):
         axes_names = ['X Axis', 'Y Axis', 'Z Axis']
+        if marker_to_plot == 'center of mass':
+            for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):
 
-        for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):
-
-            ax.cla()
-            ax.plot(freemocap_data[:,mediapipe_index,dimension], label = 'FreeMoCap', alpha = .7)
-
-            ax.set_ylabel(ax_name)
+                ax.cla()
+                ax.plot(freemocap_com_data[:,dimension], 'r.-',label = 'FreeMoCap', alpha = .7)
+                ax.set_ylabel(ax_name)
+                
+                if dimension == 2: #put the xlabel only on the last plot
+                    ax.set_xlabel('Frame #')
+                ax.legend()
             
-            if dimension == 2: #put the xlabel only on the last plot
-                ax.set_xlabel('Frame #')
+        else:
+            mediapipe_index = self.get_mediapipe_indices(marker_to_plot)
 
-            ax.legend()
+
+            for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):
+                
+                ax.cla()
+                ax.plot(freemocap_data[:,mediapipe_index,dimension], label = 'FreeMoCap', alpha = .7,)
+                ax.set_ylabel(ax_name)
+            
+                if dimension == 2: #put the xlabel only on the last plot
+                    ax.set_xlabel('Frame #')
+                ax.legend()
 
         self.fig.figure.canvas.draw_idle()
 
