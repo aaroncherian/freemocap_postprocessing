@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt, QPoint, QPointF, QRect
 from PyQt6.QtGui import QPainter, QColor, QBrush, QLinearGradient, QPen
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
+
 
 class LEDIndicator(QWidget):
     def __init__(self, parent=None):
@@ -8,7 +9,7 @@ class LEDIndicator(QWidget):
         self.setFixedSize(15, 15)
         self.color = QColor(255,68,0)
 
-    def set_unfinished_process_color(self):
+    def set_not_started_process_color(self):
         self.color = QColor(255,68,0)
         self.update()
 
@@ -47,4 +48,44 @@ class LEDIndicator(QWidget):
         painter.setPen(QPen(border_color, 1))
         painter.drawEllipse(border_rect.center(), diameter / 2, diameter / 2)
 
+
+class LedContainer(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        self.task_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
+        self.layout = QHBoxLayout()
+
+    def create_led_indicators(self):
+        self.progress_led_dict = {}
+
+        for task in self.task_list:
+            #create an LED indicator for each task in the task list
+            led_indicator = LEDIndicator()
+            self.progress_led_dict[task] = led_indicator
+
+            led_label = QLabel(task.capitalize())
+
+            led_item_layout = QHBoxLayout()
+            led_item_layout.addWidget(led_indicator)
+            led_item_layout.addWidget(led_label)
+
+            self.layout.addLayout(led_item_layout)
+
+        self.layout.addStretch()
+
+        return self.progress_led_dict, self.layout
+    
+    def change_leds_to_tasks_not_started_color(self):
+        for led_indicator in self.progress_led_dict.values():
+            led_indicator.set_not_started_process_color()
+
+    
+    def change_led_to_task_is_running_color(self,task):
+        if task in self.progress_led_dict:
+            self.progress_led_dict[task].set_in_process_color()
+
+    def change_led_to_task_is_finished_color(self,task):
+            if task in self.progress_led_dict:
+                self.progress_led_dict[task].set_finished_process_color()
 
