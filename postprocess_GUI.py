@@ -85,7 +85,10 @@ class MainWindow(QMainWindow):
             self.good_frame = None
             
         rotate_skeleton_bool = self.rotation_check.rotation_checkbox.isChecked()
-        self.worker_thread = WorkerThread(good_frame = self.good_frame, run_rotate_skeletons=rotate_skeleton_bool)
+
+        
+        self.worker_thread = WorkerThread()
+        self.worker_thread.update_worker_settings(run_rotate_skeletons= rotate_skeleton_bool, good_frame=self.good_frame)
         self.worker_thread.start()
         self.worker_thread.task_running_signal.connect(self.handle_task_started)
         self.worker_thread.task_completed_signal.connect(self.handle_task_completed)
@@ -112,7 +115,53 @@ class MainWindow(QMainWindow):
     def handle_plotting(self):
         self.skeleton_viewers_container.plot_processed_skeleton(self.processed_skeleton)
         self.handle_task_completed('plotting')
+class WorkerThread(QThread):
+    task_running_signal = pyqtSignal(str)
+    task_completed_signal = pyqtSignal(str, object)
+    all_tasks_finished_signal = pyqtSignal() 
+    def __init__(self):
+        super().__init__()
+        self.good_frame = True
+        self.run_rotate_skeletons = True
 
+    def update_worker_settings(self,run_rotate_skeletons:bool, good_frame:int):
+        self.run_rotate_skeletons = run_rotate_skeletons
+        self.good_frame = good_frame  
+
+    def run(self):
+        
+        self.task_running_signal.emit('interpolating')
+        interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
+        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
+        self.task_completed_signal.emit('interpolating', None)
+
+        self.task_running_signal.emit('filtering')
+        filter_values_dict = self.get_all_parameter_values(filter_params)
+        filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
+        self.task_completed_signal.emit('filtering', filtered_skeleton)
+
+        if not self.good_frame:
+            self.task_running_signal.emit('finding good frame')
+            self.good_frame = find_good_frame(filtered_skeleton, skeleton_indices = mediapipe_indices, initial_velocity_guess=.5)
+            
+        self.task_completed_signal.emit('finding good frame', self.good_frame)
+
+        if self.run_rotate_skeletons:
+            self.task_running_signal.emit('rotating skeleton')
+            origin_aligned_skeleton = align_skeleton_with_origin(filtered_skeleton,mediapipe_indices,self.good_frame)[0]
+            self.task_completed_signal.emit('rotating skeleton', origin_aligned_skeleton)
+        
+        self.all_tasks_finished_signal.emit()
+
+    def get_all_parameter_values(self,parameter_object):
+        values = {}
+        for child in parameter_object.children(): #using this just to access the second level of the parameter tree
+            if child.hasChildren():
+                for grandchild in child.children():
+                    values[grandchild.name()] = grandchild.value()
+            else:
+                values[child.name()] = child.value()
+        return values
 
 class GoodFrameWidget(QWidget):
     def __init__(self):
@@ -171,49 +220,6 @@ class RotationCheckBox(QWidget):
     def get_checkbox_state(self):
         return self.rotation_checkbox.isChecked()        
 
-class WorkerThread(QThread):
-    task_running_signal = pyqtSignal(str)
-    task_completed_signal = pyqtSignal(str, object)
-    all_tasks_finished_signal = pyqtSignal() 
-    def __init__(self, run_rotate_skeletons = True, good_frame = None):
-        super().__init__()
-        self.good_frame = good_frame
-        self.run_rotate_skeletons = run_rotate_skeletons  
-
-    def run(self):
-        
-        self.task_running_signal.emit('interpolating')
-        interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
-        self.task_completed_signal.emit('interpolating', None)
-
-        self.task_running_signal.emit('filtering')
-        filter_values_dict = self.get_all_parameter_values(filter_params)
-        filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
-        self.task_completed_signal.emit('filtering', filtered_skeleton)
-
-        if not self.good_frame:
-            self.task_running_signal.emit('finding good frame')
-            self.good_frame = find_good_frame(filtered_skeleton, skeleton_indices = mediapipe_indices, initial_velocity_guess=.5)
-            
-        self.task_completed_signal.emit('finding good frame', self.good_frame)
-
-        if self.run_rotate_skeletons:
-            self.task_running_signal.emit('rotating skeleton')
-            origin_aligned_skeleton = align_skeleton_with_origin(filtered_skeleton,mediapipe_indices,self.good_frame)[0]
-            self.task_completed_signal.emit('rotating skeleton', origin_aligned_skeleton)
-        
-        self.all_tasks_finished_signal.emit()
-
-    def get_all_parameter_values(self,parameter_object):
-        values = {}
-        for child in parameter_object.children(): #using this just to access the second level of the parameter tree
-            if child.hasChildren():
-                for grandchild in child.children():
-                    values[grandchild.name()] = grandchild.value()
-            else:
-                values[child.name()] = child.value()
-        return values
 
 if __name__ == "__main__":
     
