@@ -12,6 +12,10 @@ class LEDIndicator(QWidget):
         self.color = QColor(255,68,0)
         self.update()
 
+    def set_in_process_color(self):
+        self.color = QColor(255,213,0)
+        self.update()
+
     def set_finished_process_color(self):
         self.color = QColor(1,88,91)
         self.update()

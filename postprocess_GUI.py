@@ -1,15 +1,19 @@
 from pathlib import Path
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel
+from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
 from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QIntValidator
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
 from freemocap_utils.postprocessing_widgets.skeleton_view_widget import SkeletonViewWidget
-
 from freemocap_utils.postprocessing_widgets.parameter_widgets import interpolation_params, filter_params
 from freemocap_utils.postprocessing_widgets.postprocessing_functions.interpolate_data import interpolate_skeleton_data
 from freemocap_utils.postprocessing_widgets.postprocessing_functions.filter_data import filter_skeleton_data
+from freemocap_utils.postprocessing_widgets.postprocessing_functions.good_frame_finder import find_good_frame
+from freemocap_utils.postprocessing_widgets.postprocessing_functions.rotate_skeleton import align_skeleton_with_origin
+
+from freemocap_utils.mediapipe_skeleton_builder import mediapipe_indices
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -28,7 +32,7 @@ class MainWindow(QMainWindow):
         self.frame_count_slider = FrameCountSlider(num_frames)
         layout.addWidget(self.frame_count_slider)
 
-        progress_led_name_list = ['interpolating', 'filtering', 'plotting']
+        progress_led_name_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
         self.progress_led_dict, led_layout = self.create_led_indicators(progress_led_name_list)
         layout.addLayout(led_layout)
 
@@ -41,6 +45,12 @@ class MainWindow(QMainWindow):
 
         main_tree = self.create_main_page_parameter_tree()
         layout.addWidget(main_tree)
+
+        self.good_frame_entry = GoodFrameWidget()
+        layout.addWidget(self.good_frame_entry)
+
+        self.rotation_check = RotationCheckBox()
+        layout.addWidget(self.rotation_check)
 
         widget.setLayout(layout)
         self.setCentralWidget(widget)
@@ -59,7 +69,7 @@ class MainWindow(QMainWindow):
     def create_led_indicators(self, progress_led_name_list):
         progress_led_dict = {}
 
-        led_layout = QVBoxLayout()
+        led_layout = QHBoxLayout()
 
         for led_name in progress_led_name_list:
             led_indicator = LEDIndicator()
@@ -72,6 +82,8 @@ class MainWindow(QMainWindow):
             led_item_layout.addWidget(led_label)
 
             led_layout.addLayout(led_item_layout)
+
+        led_layout.addStretch()
 
         return progress_led_dict, led_layout
 
@@ -102,36 +114,128 @@ class MainWindow(QMainWindow):
         for led_indicator in self.progress_led_dict.values():
             led_indicator.set_unfinished_process_color()
 
-        self.worker_thread = WorkerThread()
-        self.worker_thread.progress_signal.connect(self.update_led_color)
+
+        if self.good_frame_entry.good_frame_entry.text():
+            self.good_frame = int(self.good_frame_entry.good_frame_entry.text())
+        else:
+            self.good_frame = None
+            
+        rotate_skeleton_bool = self.rotation_check.rotation_checkbox.isChecked()
+        self.worker_thread = WorkerThread(good_frame = self.good_frame, run_rotate_skeletons=rotate_skeleton_bool)
+        self.worker_thread.starting_signal.connect(self.update_process_starting_color)
+        self.worker_thread.finished_signal.connect(self.update_process_finished_color)
         self.worker_thread.result_signal.connect(self.handle_plotting)
         self.worker_thread.start()
 
     def handle_plotting(self,result):
         self.processed_skeleton_viewer.load_skeleton(result)
-        self.update_led_color('plotting')
+        self.update_process_finished_color('plotting')
 
-    def update_led_color(self, task):
+    def update_process_starting_color(self,task):
+        if task in self.progress_led_dict:
+            self.progress_led_dict[task].set_in_process_color()
+
+    def update_process_finished_color(self, task, result = None):
         if task in self.progress_led_dict:
             self.progress_led_dict[task].set_finished_process_color()
+
+            if task == 'finding good frame':
+                self.good_frame_entry.good_frame_checkbox.setChecked(False)
+                self.good_frame_entry.good_frame_entry.setText(str(result))
+
+
+class GoodFrameWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        layout = QHBoxLayout()
+        self.good_frame_label = QLabel('Good Frame:')
+        self.good_frame_entry = QLineEdit()
+        self.good_frame_entry.setValidator(QIntValidator())
+        self.good_frame_entry.setMaximumWidth(60)
+        self.good_frame_checkbox = QCheckBox()
+        self.checkbox_label = QLabel('Auto Find Good Frame')
+
+        layout.addWidget(self.good_frame_label)
+        layout.addWidget(self.good_frame_entry)
+        layout.addWidget(self.good_frame_checkbox)
+        layout.addWidget(self.checkbox_label)
+        layout.addStretch()
+
+        self.good_frame_checkbox.stateChanged.connect(self.checkbox_state_changed)
+
+        self.good_frame_checkbox.setChecked(True)
+
+        self.setLayout(layout)
+
+    def checkbox_state_changed(self):
+        if self.good_frame_checkbox.isChecked():
+            self.good_frame_entry.setEnabled(False)
+            self.good_frame_entry.setText(None)
+        else:
+            self.good_frame_entry.setEnabled(True)
+
+    def get_input_value(self):
+        if self.good_frame_entry.isEnabled():
+            return int(self.good_frame_entry.text())
+        else:
+            return None
+        
+class RotationCheckBox(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        layout = QHBoxLayout()
+
+        self.rotation_label = QLabel('Rotate Data:')
+        self.rotation_checkbox = QCheckBox()
+
+        layout.addWidget(self.rotation_label)
+        layout.addWidget(self.rotation_checkbox)
+
+        self.setLayout(layout)
+        layout.addStretch()
+
+        self.rotation_checkbox.setChecked(True)
+
+    def get_checkbox_state(self):
+        return self.rotation_checkbox.isChecked()        
+
 class WorkerThread(QThread):
-    progress_signal = pyqtSignal(str)
-    result_signal = pyqtSignal(object)   
+    starting_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal(str, object)
+    result_signal = pyqtSignal(object) 
+    def __init__(self, run_rotate_skeletons = True, good_frame = None):
+        super().__init__()
+        self.good_frame = good_frame
+        self.run_rotate_skeletons = run_rotate_skeletons  
 
     def run(self):
-        # Simulate time-consuming tasks
-
         
+        self.starting_signal.emit('interpolating')
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
         interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
-        self.progress_signal.emit('interpolating')
-       
+        self.finished_signal.emit('interpolating', None)
+
+        self.starting_signal.emit('filtering')
         filter_values_dict = self.get_all_parameter_values(filter_params)
         filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
-        self.progress_signal.emit('filtering')
+        processed_skeleton= filtered_skeleton
+        self.finished_signal.emit('filtering', None)
+
+        if not self.good_frame:
+            self.starting_signal.emit('finding good frame')
+            self.good_frame = find_good_frame(filtered_skeleton, skeleton_indices = mediapipe_indices, initial_velocity_guess=.5)
+            
+        self.finished_signal.emit('finding good frame', self.good_frame)
+
+        if self.run_rotate_skeletons:
+            self.starting_signal.emit('rotating skeleton')
+            origin_aligned_skeleton = align_skeleton_with_origin(filtered_skeleton,mediapipe_indices,self.good_frame)[0]
+            processed_skeleton= origin_aligned_skeleton
+            self.finished_signal.emit('rotating skeleton', None)
         
-        processed_skeleton = filtered_skeleton
-        #self.processed_skeleton_viewer.load_skeleton(filtered_skeleton)
+        
         self.result_signal.emit(processed_skeleton)
 
     def get_all_parameter_values(self,parameter_object):
