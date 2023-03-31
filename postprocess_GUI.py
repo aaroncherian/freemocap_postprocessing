@@ -11,6 +11,14 @@ from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
 from freemocap_utils.postprocessing_widgets.parameter_widgets import rotating_params
 
+
+
+
+
+import time
+
+
+
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
@@ -45,9 +53,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.process_button)
 
     def connect_signals_to_slots(self):
-        self.frame_count_slider.slider.valueChanged.connect(lambda:self.update_viewer_plots(self.frame_count_slider.slider.value()))
+        self.frame_count_slider.slider.valueChanged.connect(lambda: self.update_viewer_plots(self.frame_count_slider.slider.value()))
         
-    def update_viewer_plots(self,frame_to_plot):
+    def update_viewer_plots(self, frame_to_plot):
         self.skeleton_viewers_container.update_raw_viewer_plot(frame_to_plot)
         self.skeleton_viewers_container.update_processed_viewer_plot(frame_to_plot)
         
@@ -64,9 +72,11 @@ class MainWindow(QMainWindow):
         self.led_container.change_led_to_task_is_running_color(task)
 
     def handle_task_completed(self,task):
+
         self.led_container.change_led_to_task_is_finished_color(task)
 
     def handle_plotting(self,task_results:dict):
+        good_frame = task_results['finding good frame']['result']
         self.interpolated_skeleton = task_results['interpolating']['result']
         self.filtered_skeleton = task_results['filtering']['result']
         self.rotated_skeleton = task_results['rotating skeleton']['result']
@@ -75,11 +85,9 @@ class MainWindow(QMainWindow):
             self.skeleton_viewers_container.plot_processed_skeleton(self.rotated_skeleton)
         else:
             self.skeleton_viewers_container.plot_processed_skeleton(self.filtered_skeleton)
-
-        good_frame = task_results['finding good frame']['result']
+        
         self.update_viewer_plots(good_frame)
         self.frame_count_slider.slider.setValue(good_frame)
-
 
         self.handle_task_completed('plotting')
 
@@ -144,8 +152,10 @@ class RotationCheckBox(QWidget):
 
 if __name__ == "__main__":
     
-    path_to_freemocap_session_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
-    freemocap_raw_data = np.load(path_to_freemocap_session_folder/'DataArrays'/'mediaPipeSkel_3d.npy')
+    #path_to_freemocap_session_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
+
+    path_to_freemocap_session_folder = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\recording_15_22_56_gmt-4__brit_one_inch')
+    freemocap_raw_data = np.load(path_to_freemocap_session_folder/'output_data'/'raw_data'/'mediapipe3dData_numFrames_numTrackedPoints_spatialXYZ.npy')
 
     app = QApplication([])
     win = MainWindow(freemocap_raw_data)
