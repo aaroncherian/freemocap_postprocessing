@@ -9,6 +9,7 @@ from freemocap_utils.postprocessing_widgets.parameter_widgets import interpolati
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
+from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -37,7 +38,7 @@ class MainWindow(QMainWindow):
         self.skeleton_viewers_container = SkeletonViewersContainer()
         layout.addWidget(self.skeleton_viewers_container)
 
-        main_tree = self.create_main_page_parameter_tree()
+        main_tree = create_main_page_parameter_tree()
         layout.addWidget(main_tree)
 
         self.good_frame_entry = GoodFrameWidget()
@@ -60,12 +61,12 @@ class MainWindow(QMainWindow):
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
         
-    def create_main_page_parameter_tree(self):
-        main_tree = ParameterTree()
-        main_tree.addParameters(interpolation_params, showTop=False)
-        main_tree.addParameters(filter_params,showTop=False)
+    # def create_main_page_parameter_tree(self):
+    #     main_tree = ParameterTree()
+    #     main_tree.addParameters(interpolation_params, showTop=False)
+    #     main_tree.addParameters(filter_params,showTop=False)
 
-        return main_tree
+    #     return main_tree
 
     def update_viewer_plots(self):
         self.skeleton_viewers_container.update_raw_viewer_plot(self.frame_count_slider.slider.value())
