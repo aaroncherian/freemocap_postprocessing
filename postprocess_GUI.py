@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
         rotate_skeleton_bool = self.rotation_check.rotation_checkbox.isChecked()
 
         
-        self.worker_thread = WorkerThread()
+        self.worker_thread = WorkerThread(self.task_list)
         self.worker_thread.update_worker_settings(run_rotate_skeletons= rotate_skeleton_bool, good_frame=self.good_frame)
         self.worker_thread.start()
         self.worker_thread.task_running_signal.connect(self.handle_task_started)
@@ -102,56 +102,79 @@ class MainWindow(QMainWindow):
             self.good_frame_entry.good_frame_checkbox.setChecked(False)
             self.good_frame_entry.good_frame_entry.setText(str(result))
         
-        if task == 'filtering':
-            self.filtered_skeleton = result
-            self.processed_skeleton = self.filtered_skeleton
+        if task in ['filtering', 'rotating skeleton']:
+           self.processed_skeleton = result
         
-        if task == 'rotating skeleton': 
-            self.rotated_skeleton = result
-            self.processed_skeleton = self.rotated_skeleton
-
         self.led_container.change_led_to_task_is_finished_color(task)
 
-    def handle_plotting(self):
-        self.skeleton_viewers_container.plot_processed_skeleton(self.processed_skeleton)
+    def handle_plotting(self,task_results:dict):
+        self.interpolated_skeleton = task_results['interpolating']['result']
+        self.filtered_skeleton = task_results['filtering']['result']
+        self.rotated_skeleton = task_results['rotating skeleton']['result']
+
+        if self.rotated_skeleton is not None:
+            self.skeleton_viewers_container.plot_processed_skeleton(self.rotated_skeleton)
+        else:
+            self.skeleton_viewers_container.plot_processed_skeleton(self.filtered_skeleton)
+
         self.handle_task_completed('plotting')
 class WorkerThread(QThread):
     task_running_signal = pyqtSignal(str)
     task_completed_signal = pyqtSignal(str, object)
-    all_tasks_finished_signal = pyqtSignal() 
-    def __init__(self):
+    all_tasks_finished_signal = pyqtSignal(object) 
+    def __init__(self, task_list:list):
         super().__init__()
         self.good_frame = True
         self.run_rotate_skeletons = True
 
+        #create a dictionary from the task list
+        self.tasks = {task_name: {'function': None, 'result': None} for task_name in task_list} 
+        # Assign the task functions here
+        self.tasks['interpolating']['function'] = self.interpolate_task
+        self.tasks['filtering']['function'] = self.filter_task
+        self.tasks['finding good frame']['function'] = self.find_good_frame_task
+        self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
+        self.tasks['plotting']['function'] = None
+
     def update_worker_settings(self,run_rotate_skeletons:bool, good_frame:int):
-        self.run_rotate_skeletons = run_rotate_skeletons
         self.good_frame = good_frame  
 
+        if not run_rotate_skeletons:
+            self.tasks['rotating skeleton']['function'] = None
+        else:
+            self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
+
+
     def run(self):
-        
-        self.task_running_signal.emit('interpolating')
+        for task_info in self.tasks.values(): #clear any previous results 
+            task_info['result'] = None
+
+        for task_name, task_info in self.tasks.items():
+            if task_info['function'] is not None:
+                self.task_running_signal.emit(task_name)
+                task_info['result'] = task_info['function']()
+                self.task_completed_signal.emit(task_name, task_info['result'])
+
+        self.all_tasks_finished_signal.emit(self.tasks)
+
+    def interpolate_task(self):
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data,method_to_use= interpolation_values_dict['Method'])
-        self.task_completed_signal.emit('interpolating', None)
+        interpolated_skeleton = interpolate_skeleton_data(freemocap_raw_data, method_to_use=interpolation_values_dict['Method'])
+        return interpolated_skeleton
 
-        self.task_running_signal.emit('filtering')
+    def filter_task(self):
         filter_values_dict = self.get_all_parameter_values(filter_params)
-        filtered_skeleton = filter_skeleton_data(interpolated_skeleton, order = filter_values_dict['Order'], cutoff= filter_values_dict['Cutoff Frequency'], sampling_rate= filter_values_dict['Sampling Rate'])
-        self.task_completed_signal.emit('filtering', filtered_skeleton)
+        filtered_skeleton = filter_skeleton_data(self.tasks['interpolating']['result'], order=filter_values_dict['Order'], cutoff=filter_values_dict['Cutoff Frequency'], sampling_rate=filter_values_dict['Sampling Rate'])
+        return filtered_skeleton
 
+    def find_good_frame_task(self):
         if not self.good_frame:
-            self.task_running_signal.emit('finding good frame')
-            self.good_frame = find_good_frame(filtered_skeleton, skeleton_indices = mediapipe_indices, initial_velocity_guess=.5)
-            
-        self.task_completed_signal.emit('finding good frame', self.good_frame)
+            self.good_frame = find_good_frame(self.tasks['filtering']['result'], skeleton_indices=mediapipe_indices, initial_velocity_guess=.5)
+        return self.good_frame
 
-        if self.run_rotate_skeletons:
-            self.task_running_signal.emit('rotating skeleton')
-            origin_aligned_skeleton = align_skeleton_with_origin(filtered_skeleton,mediapipe_indices,self.good_frame)[0]
-            self.task_completed_signal.emit('rotating skeleton', origin_aligned_skeleton)
-        
-        self.all_tasks_finished_signal.emit()
+    def rotate_skeleton_task(self):
+        origin_aligned_skeleton = align_skeleton_with_origin(self.tasks['filtering']['result'], mediapipe_indices, self.good_frame)[0]
+        return origin_aligned_skeleton
 
     def get_all_parameter_values(self,parameter_object):
         values = {}
