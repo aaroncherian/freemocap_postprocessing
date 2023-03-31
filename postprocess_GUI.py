@@ -5,13 +5,12 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBo
 from PyQt6.QtGui import QIntValidator
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
-from freemocap_utils.postprocessing_widgets.parameter_widgets import interpolation_params, filter_params
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
 
-from pyqtgraph.parametertree import ParameterTree
+
 
 
 
@@ -61,13 +60,6 @@ class MainWindow(QMainWindow):
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
         
-    # def create_main_page_parameter_tree(self):
-    #     main_tree = ParameterTree()
-    #     main_tree.addParameters(interpolation_params, showTop=False)
-    #     main_tree.addParameters(filter_params,showTop=False)
-
-    #     return main_tree
-
     def update_viewer_plots(self):
         self.skeleton_viewers_container.update_raw_viewer_plot(self.frame_count_slider.slider.value())
         self.skeleton_viewers_container.update_processed_viewer_plot(self.frame_count_slider.slider.value())
