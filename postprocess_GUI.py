@@ -58,11 +58,11 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.process_button)
 
     def connect_signals_to_slots(self):
-        self.frame_count_slider.slider.valueChanged.connect(self.update_viewer_plots)
+        self.frame_count_slider.slider.valueChanged.connect(lambda:self.update_viewer_plots(self.frame_count_slider.slider.value()))
         
-    def update_viewer_plots(self):
-        self.skeleton_viewers_container.update_raw_viewer_plot(self.frame_count_slider.slider.value())
-        self.skeleton_viewers_container.update_processed_viewer_plot(self.frame_count_slider.slider.value())
+    def update_viewer_plots(self,frame_to_plot):
+        self.skeleton_viewers_container.update_raw_viewer_plot(frame_to_plot)
+        self.skeleton_viewers_container.update_processed_viewer_plot(frame_to_plot)
         
     def postprocess_data(self):
         self.led_container.change_leds_to_tasks_not_started_color()
@@ -100,6 +100,11 @@ class MainWindow(QMainWindow):
             self.skeleton_viewers_container.plot_processed_skeleton(self.rotated_skeleton)
         else:
             self.skeleton_viewers_container.plot_processed_skeleton(self.filtered_skeleton)
+
+        good_frame = task_results['finding good frame']['result']
+        self.update_viewer_plots(good_frame)
+        self.frame_count_slider.slider.setValue(good_frame)
+
 
         self.handle_task_completed('plotting')
 
