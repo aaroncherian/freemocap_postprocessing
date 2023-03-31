@@ -9,6 +9,7 @@ from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorker
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
+from freemocap_utils.postprocessing_widgets.parameter_widgets import rotating_params
 
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
@@ -29,14 +30,8 @@ class MainWindow(QMainWindow):
         self.skeleton_viewers_container = SkeletonViewersContainer()
         layout.addWidget(self.skeleton_viewers_container)
 
-        main_tree = create_main_page_parameter_tree()
-        layout.addWidget(main_tree)
-
-        self.good_frame_entry = GoodFrameWidget()
-        layout.addWidget(self.good_frame_entry)
-
-        self.rotation_check = RotationCheckBox()
-        layout.addWidget(self.rotation_check)
+        self.main_tree = create_main_page_parameter_tree()
+        layout.addWidget(self.main_tree)
 
         widget.setLayout(layout)
         self.setCentralWidget(widget)
@@ -59,15 +54,7 @@ class MainWindow(QMainWindow):
     def postprocess_data(self):
         self.led_container.change_leds_to_tasks_not_started_color()
 
-        if self.good_frame_entry.good_frame_entry.text():
-            self.good_frame = int(self.good_frame_entry.good_frame_entry.text())
-        else:
-            self.good_frame = None
-            
-        rotate_skeleton_bool = self.rotation_check.rotation_checkbox.isChecked()
-
         self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=self.task_list)
-        self.worker_thread.update_worker_settings(run_rotate_skeletons= rotate_skeleton_bool, good_frame=self.good_frame)
         self.worker_thread.start()
         self.worker_thread.task_running_signal.connect(self.handle_task_started)
         self.worker_thread.task_completed_signal.connect(self.handle_task_completed)
@@ -76,11 +63,7 @@ class MainWindow(QMainWindow):
     def handle_task_started(self,task):
         self.led_container.change_led_to_task_is_running_color(task)
 
-    def handle_task_completed(self,task,result=None):
-        if task == 'finding good frame':
-            self.good_frame_entry.good_frame_checkbox.setChecked(False)
-            self.good_frame_entry.good_frame_entry.setText(str(result))
-
+    def handle_task_completed(self,task):
         self.led_container.change_led_to_task_is_finished_color(task)
 
     def handle_plotting(self,task_results:dict):
