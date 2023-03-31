@@ -10,14 +10,6 @@ from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import Sk
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
 
-
-
-
-
-import time
-
-
-
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
