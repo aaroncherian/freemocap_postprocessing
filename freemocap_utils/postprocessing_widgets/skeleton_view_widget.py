@@ -28,7 +28,9 @@ class SkeletonViewWidget(QWidget):
 
         self.skeleton_loaded = False
 
-
+        self.current_xlim = None
+        self.current_ylim = None
+        self.current_zlim = None
 
         
     def load_skeleton(self,skeleton_3d_data:np.ndarray):
@@ -61,9 +63,14 @@ class SkeletonViewWidget(QWidget):
     def plot_skel(self,frame_number,skel_x,skel_y,skel_z):
         self.ax.scatter(skel_x,skel_y,skel_z)
         self.plot_skeleton_bones(frame_number)
-        self.ax.set_xlim([self.mx_skel-self.skel_3d_range, self.mx_skel+self.skel_3d_range])
-        self.ax.set_ylim([self.my_skel-self.skel_3d_range, self.my_skel+self.skel_3d_range])
-        self.ax.set_zlim([self.mz_skel-self.skel_3d_range, self.mz_skel+self.skel_3d_range])
+        if self.current_xlim:
+            self.ax.set_xlim([self.current_xlim[0],self.current_xlim[1]])
+            self.ax.set_ylim([self.current_ylim[0],self.current_ylim[1]])
+            self.ax.set_zlim([self.current_zlim[0],self.current_zlim[1]])
+        else:
+            self.ax.set_xlim([self.mx_skel-self.skel_3d_range, self.mx_skel+self.skel_3d_range])
+            self.ax.set_ylim([self.my_skel-self.skel_3d_range, self.my_skel+self.skel_3d_range])
+            self.ax.set_zlim([self.mz_skel-self.skel_3d_range, self.mz_skel+self.skel_3d_range])
 
         self.fig.figure.canvas.draw_idle()
 
@@ -86,6 +93,9 @@ class SkeletonViewWidget(QWidget):
 
     def replot(self, frame_number:int):
         skel_x,skel_y,skel_z = self.get_x_y_z_data(frame_number)
+        self.current_xlim = self.ax.get_xlim()
+        self.current_ylim = self.ax.get_ylim()
+        self.current_zlim = self.ax.get_zlim()
         self.ax.cla()
         self.plot_skel(frame_number,skel_x,skel_y,skel_z)
         #self.label.setText(str(frame_number))
