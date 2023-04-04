@@ -61,7 +61,7 @@ class TimeSeriesPlotterWidget(QWidget):
                 for session in freemocap_com_data_dict.keys():
               
                     freemocap_com_data = freemocap_com_data_dict[session]
-                    ax.plot(freemocap_com_data[:,dimension], 'r.-',label = 'FreeMoCap', alpha = .7)
+                    ax.plot(freemocap_com_data[:,dimension], '.-',label = 'FreeMoCap', alpha = .7)
                     ax.set_ylabel(ax_name)
                 
                 if dimension == 2: #put the xlabel only on the last plot
