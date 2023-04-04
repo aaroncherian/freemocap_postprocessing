@@ -51,32 +51,39 @@ class TimeSeriesPlotterWidget(QWidget):
         return mediapipe_index
     
 
-    def update_plot(self,marker_to_plot:str, freemocap_data:np.ndarray, freemocap_com_data:np.ndarray):
+    def update_plot(self,marker_to_plot:str, freemocap_marker_data_dict:dict, freemocap_com_data_dict:dict):
         axes_names = ['X Axis', 'Y Axis', 'Z Axis']
+
+        
         if marker_to_plot == 'center of mass':
             for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):
-
                 ax.cla()
-                ax.plot(freemocap_com_data[:,dimension], 'r.-',label = 'FreeMoCap', alpha = .7)
-                ax.set_ylabel(ax_name)
+                for session in freemocap_com_data_dict.keys():
+              
+                    freemocap_com_data = freemocap_com_data_dict[session]
+                    ax.plot(freemocap_com_data[:,dimension], '.-',label = 'FreeMoCap', alpha = .7)
+                    ax.set_ylabel(ax_name)
                 
                 if dimension == 2: #put the xlabel only on the last plot
                     ax.set_xlabel('Frame #')
                 ax.legend()
+            pass
             
         else:
             mediapipe_index = self.get_mediapipe_indices(marker_to_plot)
 
-
             for dimension, (ax,ax_name) in enumerate(zip(self.axes_list,axes_names)):
-                
                 ax.cla()
-                ax.plot(freemocap_data[:,mediapipe_index,dimension], label = 'FreeMoCap', alpha = .7,)
-                ax.set_ylabel(ax_name)
-            
-                if dimension == 2: #put the xlabel only on the last plot
-                    ax.set_xlabel('Frame #')
-                ax.legend()
+                     
+                for session in freemocap_marker_data_dict.keys():
+                    freemocap_marker_data = freemocap_marker_data_dict[session]
+
+                    ax.plot(freemocap_marker_data[:,mediapipe_index,dimension], label = session, alpha = .7,)
+                    ax.set_ylabel(ax_name)
+                
+                    if dimension == 2: #put the xlabel only on the last plot
+                        ax.set_xlabel('Frame #')
+                    ax.legend()
 
         self.fig.figure.canvas.draw_idle()
 
