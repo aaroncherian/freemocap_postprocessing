@@ -4,6 +4,29 @@ from qtpy.QtWidgets import QSlider
 from pathlib import Path
 import cv2
 
+def calculate_joint_velocities(joint_positions):
+    # Calculate differences between consecutive frames
+    diffs = np.diff(joint_positions, axis=0)
+
+    # Calculate the magnitude of the velocity vector for each joint
+    velocities = np.linalg.norm(diffs, axis=-1)
+
+    
+
+    return velocities
+
+
+# def calculate_joint_velocities(joint_positions):
+#     velocities = np.diff(joint_positions, axis=0)
+
+#     # Calculate differences between consecutive velocities (accelerations)
+#     accelerations = np.diff(velocities, axis=0)
+
+#     # Calculate the magnitude of the acceleration vector for each joint
+#     magnitudes = np.linalg.norm(accelerations, axis=-1)
+
+#     return magnitudes
+
 def rotate_points(points, angle_degrees, center=None):
     # Convert angle from degrees to radians
     angle_rad = np.deg2rad(angle_degrees)
@@ -32,9 +55,23 @@ freemocap_raw_data = np.load(path_to_freemocap_session_folder/'output_data'/'raw
 
 freemocap_single_cam = freemocap_raw_data[0,:,0:33,0:2]
 
+freemocap_adjusted = freemocap_single_cam[:,:,::-1]
+# freemocap_adjusted[]
+
+#freemocap_single_cam[:,:,1] = -freemocap_single_cam[:,:,1]
+joint_positions = freemocap_adjusted
+
 num_frames = freemocap_single_cam.shape[0]
 num_joints = freemocap_single_cam.shape[1]
 
+joint_velocities = calculate_joint_velocities(joint_positions)
+def detect_tracking_errors(joint_velocities, threshold):
+    errors = joint_velocities > threshold
+    return errors
+
+
+velocity_threshold = 50
+tracking_errors = detect_tracking_errors(joint_velocities, velocity_threshold)
 
 f =2 
 
@@ -53,30 +90,33 @@ cap.release()
 frames = np.array(frames)
 
 
-angle_degrees = -90  # Replace with the desired rotation angle in degrees
+# angle_degrees = -90  # Replace with the desired rotation angle in degrees
 
-# Calculate the center of rotation (e.g., center of the video frame)
-center = np.array([frame_width / 2, frame_height / 2])
+# # Calculate the center of rotation (e.g., center of the video frame)
+# center = np.array([frame_width / 2, frame_height / 2])
 
-# Rotate joint positions
-joint_positions = np.empty_like(freemocap_single_cam)
-for i, frame_joint_positions in enumerate(freemocap_single_cam):
-    joint_positions[i] = rotate_points(frame_joint_positions, angle_degrees, center)
+# # Rotate joint positions
+# joint_positions = np.empty_like(freemocap_single_cam)
+# for i, frame_joint_positions in enumerate(freemocap_single_cam):
+#     joint_positions[i] = rotate_points(frame_joint_positions, angle_degrees, center)
 
 
 # Create a Napari viewer instance
 viewer = napari.Viewer()
 
 # Add an image layer to display video frames
-# image_layer = viewer.add_image(frames[0], name='Video Frames')
+image_layer = viewer.add_image(frames[0], name='Video Frames')
 
 # Add a points layer to display the joint positions
 points_layer = viewer.add_points(joint_positions[0], name='Joints')
+error_points_layer = viewer.add_points(np.zeros_like(joint_positions[0]), name='Errors', face_color='red')
 
 # Function to update joint positions on the points layer
 def update_joint_positions(value):
-    #image_layer.data = frames[value]
+    image_layer.data = frames[value]
     points_layer.data = joint_positions[value]
+    error_points_layer.data = joint_positions[value][tracking_errors[value]]
+
 
 # Create a QSlider widget to navigate through frames
 slider = QSlider()
