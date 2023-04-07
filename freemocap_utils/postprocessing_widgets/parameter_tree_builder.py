@@ -1,5 +1,5 @@
 
-from pyqtgraph.parametertree import ParameterTree, Parameter
+from pyqtgraph.parametertree import ParameterTree
 
 from freemocap_utils.postprocessing_widgets.parameter_widgets import interpolation_params, filter_params, rotating_params, good_frame_finder_params
 

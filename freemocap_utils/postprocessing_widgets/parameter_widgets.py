@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout,QVBoxLayout, QPushButton, QLabe
 interpolation_settings = [
     {"name": "Interpolation", "type": "group", "children": [
         {"name": "Method", "type": "list", "values": ["linear", "cubic", "spline"]},
+        {"name": "Order", "type": "int", "value":3, "step":1}
     ]}
 ]
 
@@ -39,7 +40,7 @@ class CustomGoodFrameParam(Parameter):
 
         self.auto_find_good_frame_param.sigValueChanged.connect(self.auto_find_good_frame_changed)
 
-    def auto_find_good_frame_changed(self, parameter, value):
+    def auto_find_good_frame_changed(self, value):
         if value:
             self.good_frame_param.setValue("")
             self.good_frame_param.setOpts(readonly=True)
