@@ -5,8 +5,17 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout,QVBoxLayout, QPushButton, QLabe
 
 interpolation_settings = [
     {"name": "Interpolation", "type": "group", "children": [
-        {"name": "Method", "type": "list", "values": ["linear", "cubic", "spline"]},
-        {"name": "Order", "type": "int", "value":3, "step":1}
+        {
+        "name": "Method", 
+         "type": "list", 
+         "values": ["linear", "cubic", "spline"]
+         },
+        {
+        "name": "Order (only used in spline interpolation)", 
+         "type": "int", 
+         "value":3, 
+         "step":1
+         }
     ]}
 ]
 

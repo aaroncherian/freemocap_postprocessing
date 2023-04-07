@@ -60,7 +60,7 @@ class TaskWorkerThread(QThread):
 
     def interpolate_task(self):
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        interpolated_skeleton = interpolate_skeleton_data(self.raw_skeleton_data, method_to_use=interpolation_values_dict['Method'], order=interpolation_values_dict['Order'])
+        interpolated_skeleton = interpolate_skeleton_data(self.raw_skeleton_data, method_to_use=interpolation_values_dict['Method'], order=interpolation_values_dict["Order (only used in spline interpolation)"])
         return interpolated_skeleton
 
     def filter_task(self):
