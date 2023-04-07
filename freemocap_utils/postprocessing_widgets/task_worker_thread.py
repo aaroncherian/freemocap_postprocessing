@@ -20,15 +20,22 @@ class TaskWorkerThread(QThread):
         # self.good_frame = True
 
         self.raw_skeleton_data = raw_skeleton_data
-
-        #create a dictionary from the task list
-        self.tasks = {task_name: {'function': None, 'result': None} for task_name in task_list} 
-        # Assign the task functions here
-        self.tasks['interpolating']['function'] = self.interpolate_task
-        self.tasks['filtering']['function'] = self.filter_task
-        self.tasks['finding good frame']['function'] = self.find_good_frame_task
-        self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
-        self.tasks['plotting']['function'] = None
+        self.available_tasks = {
+            'interpolating': self.interpolate_task,
+            'filtering': self.filter_task,
+            'finding good frame': self.find_good_frame_task,
+            'rotating skeleton': self.rotate_skeleton_task,
+            'plotting': None
+        }
+        self.tasks = {task_name: {'function': self.available_tasks[task_name], 'result': None} for task_name in task_list}
+        # #create a dictionary from the task list
+        # self.tasks = {task_name: {'function': None, 'result': None} for task_name in task_list} 
+        # # Assign the task functions here
+        # self.tasks['interpolating']['function'] = self.interpolate_task
+        # self.tasks['filtering']['function'] = self.filter_task
+        # self.tasks['finding good frame']['function'] = self.find_good_frame_task
+        # self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
+        # self.tasks['plotting']['function'] = None
 
     # def update_worker_settings(self, good_frame:int):
     #     self.good_frame = good_frame  

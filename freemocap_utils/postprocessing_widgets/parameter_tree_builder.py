@@ -15,3 +15,10 @@ def create_main_page_parameter_tree():
 
 
     return main_tree
+
+def create_interpolation_parameter_tree():
+    interpolation_tree = ParameterTree()
+    interpolation_tree.addParameters(interpolation_params)
+
+    return interpolation_tree
+

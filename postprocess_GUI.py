@@ -1,15 +1,17 @@
 from pathlib import Path
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
+from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox, QTabWidget
 from PyQt6.QtGui import QIntValidator
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
-from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
-from freemocap_utils.postprocessing_widgets.parameter_widgets import rotating_params
+from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree
+from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
+from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
+
 
 
 
@@ -18,13 +20,77 @@ from freemocap_utils.postprocessing_widgets.parameter_widgets import rotating_pa
 import time
 
 
-
 class MainWindow(QMainWindow):
+    def __init__(self,freemocap_raw_data:np.ndarray):
+        super().__init__()
+        layout = QVBoxLayout()
+        widget = QWidget()
+
+        self.tab_widget = QTabWidget()
+
+        self.main_menu_tab = MainMenu(freemocap_raw_data=freemocap_raw_data)
+        self.tab_widget.addTab(self.main_menu_tab, 'Main Menu')
+
+        self.interp_filter_tab = InterpolationMenu(freemocap_raw_data = freemocap_raw_data)
+        self.tab_widget.addTab(self.interp_filter_tab, 'Interpolation Menu')
+        # layout.addWidget(self.main_menu)
+        
+        widget.setLayout(layout)
+        self.setCentralWidget(self.tab_widget)
+
+
+class InterpolationMenu(QWidget):
+    def __init__(self, freemocap_raw_data:np.ndarray):
+        super().__init__()
+        layout = QVBoxLayout()
+
+        self.freemocap_raw_data = freemocap_raw_data
+        self.processed_freemocap_data = None
+
+        self.marker_selector_widget = MarkerSelectorWidget()
+        layout.addWidget(self.marker_selector_widget)
+
+        self.time_series_plotter_widget = TimeSeriesPlotterWidget()
+        layout.addWidget(self.time_series_plotter_widget)
+
+        self.interpolation_param_tree = create_interpolation_parameter_tree()
+        layout.addWidget(self.interpolation_param_tree)
+
+        self.run_interpolation_button = QPushButton('Run Interpolation')
+        self.run_interpolation_button.clicked.connect(self.run_interpolation_task)
+        layout.addWidget(self.run_interpolation_button)
+
+        self.update_timeseries_plot()
+
+        self.setLayout(layout)
+        self.connect_signals_to_slots()
+
+    def update_timeseries_plot(self, reset_axes = True):
+        self.time_series_plotter_widget.update_plot(marker_to_plot=self.marker_selector_widget.current_marker, original_freemocap_data=self.freemocap_raw_data , processed_freemocap_data=self.processed_freemocap_data,reset_axes = reset_axes)
+
+    def connect_signals_to_slots(self):
+        self.marker_selector_widget.marker_to_plot_updated_signal.connect(lambda: self.update_timeseries_plot(reset_axes=True))
+
+    def run_interpolation_task(self):
+        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolating'])
+        self.worker_thread.start()
+        self.worker_thread.all_tasks_finished_signal.connect(self.handle_interpolation_result)
+
+    def handle_interpolation_result(self, task_results: dict):
+        self.processed_freemocap_data = task_results['interpolating']['result']
+        self.update_timeseries_plot(reset_axes=False)
+       
+
+
+
+
+
+
+class MainMenu(QWidget):
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
         self.task_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
         layout = QVBoxLayout()
-        widget = QWidget()
         
         self.freemocap_raw_data = freemocap_raw_data
         num_frames = freemocap_raw_data.shape[0]
@@ -41,9 +107,6 @@ class MainWindow(QMainWindow):
         self.main_tree = create_main_page_parameter_tree()
         layout.addWidget(self.main_tree)
 
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-
         self.connect_signals_to_slots()
 
         self.skeleton_viewers_container.plot_raw_skeleton(self.freemocap_raw_data)
@@ -51,6 +114,8 @@ class MainWindow(QMainWindow):
         self.process_button = QPushButton('Process Data')
         self.process_button.clicked.connect(self.postprocess_data)
         layout.addWidget(self.process_button)
+
+        self.setLayout(layout)
 
     def connect_signals_to_slots(self):
         self.frame_count_slider.slider.valueChanged.connect(lambda: self.update_viewer_plots(self.frame_count_slider.slider.value()))
@@ -150,18 +215,20 @@ class RotationCheckBox(QWidget):
         return self.rotation_checkbox.isChecked()        
 
 
+
 if __name__ == "__main__":
     
-    #path_to_freemocap_session_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
+    path_to_freemocap_session_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
     #path_to_freemocap_session_folder = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\recording_15_20_51_gmt-4__brit_half_inch')
     #path_to_freemocap_session_folder = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\recording_15_22_56_gmt-4__brit_one_inch')
-    path_to_freemocap_session_folder = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\recording_15_19_00_gmt-4__brit_baseline')
-    freemocap_raw_data = np.load(path_to_freemocap_session_folder/'output_data'/'raw_data'/'mediapipe3dData_numFrames_numTrackedPoints_spatialXYZ.npy')
 
+    # path_to_freemocap_session_folder = Path(r'C:\Users\aaron\FreeMocap_Data\recording_sessions\recording_15_19_00_gmt-4__brit_baseline')
+    # freemocap_raw_data = np.load(path_to_freemocap_session_folder/'output_data'/'raw_data'/'mediapipe3dData_numFrames_numTrackedPoints_spatialXYZ.npy')
+
+    freemocap_raw_data = np.load(path_to_freemocap_session_folder/'DataArrays'/'mediaPipeSkel_3d.npy')
     freemocap_raw_data = freemocap_raw_data[:,0:33,:]
 
     app = QApplication([])
     win = MainWindow(freemocap_raw_data)
-
     win.show()
     app.exec()
