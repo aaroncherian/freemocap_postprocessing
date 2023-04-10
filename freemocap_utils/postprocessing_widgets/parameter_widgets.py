@@ -31,13 +31,13 @@ filter_settings = [
 interpolation_params = Parameter.create(name='interp_params', type='group', children=interpolation_settings)
 filter_params = Parameter.create(name='filter_params',type='group', children=filter_settings )
 
-def get_interpolation_parameter(interpolation_settings):
-    interpolation_params = Parameter.create(name='interp_params', type='group', children=interpolation_settings)
-    return interpolation_params
+# def get_interpolation_parameter(interpolation_settings):
+#     interpolation_params = Parameter.create(name='interp_params', type='group', children=interpolation_settings)
+#     return interpolation_params
 
-def get_filter_parameter(filter_settings):
-    filter_params = Parameter.create(name='filter_params',type='group', children=filter_settings )
-    return filter_params
+# def get_filter_parameter(filter_settings):
+#     filter_params = Parameter.create(name='filter_params',type='group', children=filter_settings )
+#     return filter_params
 
 
 
