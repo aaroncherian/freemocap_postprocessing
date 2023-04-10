@@ -8,7 +8,7 @@ from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlide
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
-from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree
+from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree, create_filter_parameter_tree
 from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
 from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
 
@@ -31,9 +31,12 @@ class MainWindow(QMainWindow):
         self.main_menu_tab = MainMenu(freemocap_raw_data=freemocap_raw_data)
         self.tab_widget.addTab(self.main_menu_tab, 'Main Menu')
 
-        self.interp_filter_tab = InterpolationMenu(freemocap_raw_data = freemocap_raw_data)
-        self.tab_widget.addTab(self.interp_filter_tab, 'Interpolation Menu')
+        self.interp_tab = InterpolationMenu(freemocap_raw_data = freemocap_raw_data)
+        self.tab_widget.addTab(self.interp_tab, 'Interpolation Menu')
         # layout.addWidget(self.main_menu)
+
+        self.filter_tab = FilteringMenu(freemocap_raw_data=freemocap_raw_data)
+        self.tab_widget.addTab(self.filter_tab, 'Filtering Menu')
         
         widget.setLayout(layout)
         self.setCentralWidget(self.tab_widget)
@@ -81,7 +84,48 @@ class InterpolationMenu(QWidget):
         self.update_timeseries_plot(reset_axes=False)
        
 
+class FilteringMenu(QWidget):
+    def __init__(self, freemocap_raw_data:np.ndarray):
+        super().__init__()
+        layout = QVBoxLayout()
 
+        self.freemocap_raw_data = freemocap_raw_data
+        self.processed_freemocap_data = None
+
+        self.marker_selector_widget = MarkerSelectorWidget()
+        layout.addWidget(self.marker_selector_widget)
+
+        self.time_series_plotter_widget = TimeSeriesPlotterWidget()
+        layout.addWidget(self.time_series_plotter_widget)
+
+            
+        self.filter_param_tree = create_filter_parameter_tree()
+        layout.addWidget(self.filter_param_tree)
+
+        self.run_filter_button = QPushButton('Run Filter')
+        self.run_filter_button.clicked.connect(self.run_filter_task)
+        layout.addWidget(self.run_filter_button)
+
+        self.update_timeseries_plot()
+
+        self.setLayout(layout)
+        self.connect_signals_to_slots()
+
+    def update_timeseries_plot(self, reset_axes = True):
+        self.time_series_plotter_widget.update_plot(marker_to_plot=self.marker_selector_widget.current_marker, original_freemocap_data=self.freemocap_raw_data , processed_freemocap_data=self.processed_freemocap_data,reset_axes = reset_axes)
+
+    def connect_signals_to_slots(self):
+        self.marker_selector_widget.marker_to_plot_updated_signal.connect(lambda: self.update_timeseries_plot(reset_axes=True))
+    
+    def run_filter_task(self):
+        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolating', 'filtering'])
+        self.worker_thread.start()
+        self.worker_thread.all_tasks_finished_signal.connect(self.handle_filter_result)
+
+    def handle_filter_result(self, task_results: dict):
+        self.processed_freemocap_data = task_results['filtering']['result']
+        self.update_timeseries_plot(reset_axes=False)
+       
 
 
 

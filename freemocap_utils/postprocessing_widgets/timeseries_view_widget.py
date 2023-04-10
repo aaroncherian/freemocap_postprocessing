@@ -38,8 +38,7 @@ class TimeSeriesPlotterWidget(QWidget):
 
         self.fig, self.axes_list = self.initialize_skeleton_plot()
 
-        toolbar = NavigationToolbar(self.fig, self)
-
+        toolbar = NavigationToolbar(self.fig, self);
         self._layout.addWidget(toolbar)
         self._layout.addWidget(self.fig)
 

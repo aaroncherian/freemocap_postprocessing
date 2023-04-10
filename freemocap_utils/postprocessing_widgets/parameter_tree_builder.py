@@ -13,7 +13,6 @@ def create_main_page_parameter_tree():
     main_tree.addParameters(good_frame_finder_params,showTop = False)
     main_tree.addParameters(rotating_params, showTop=False)
 
-
     return main_tree
 
 def create_interpolation_parameter_tree():
@@ -22,3 +21,8 @@ def create_interpolation_parameter_tree():
 
     return interpolation_tree
 
+def create_filter_parameter_tree():
+    filter_tree = ParameterTree()
+    filter_tree.addParameters(filter_params)
+
+    return filter_tree
