@@ -48,14 +48,16 @@ class CustomGoodFrameParam(Parameter):
         self.good_frame_param = self.child("Good Frame Finder").child("Good Frame")
 
         self.auto_find_good_frame_param.sigValueChanged.connect(self.auto_find_good_frame_changed)
+        # self.good_frame_param.setOpts(readonly=True)
 
     def auto_find_good_frame_changed(self, value):
-        if value:
+        if value.value():
             self.good_frame_param.setValue("")
             self.good_frame_param.setOpts(readonly=True)
 
         else:
-            # self.good_frame_param.setValue("0")
+            if not self.good_frame_param.value():
+                self.good_frame_param.setValue("0")
             self.good_frame_param.setOpts(readonly=False)
 
 
