@@ -239,65 +239,6 @@ class MainMenu(QWidget):
         self.handle_task_completed('plotting')
 
 
-class GoodFrameWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        layout = QHBoxLayout()
-        self.good_frame_label = QLabel('Good Frame:')
-        self.good_frame_entry = QLineEdit()
-        self.good_frame_entry.setValidator(QIntValidator())
-        self.good_frame_entry.setMaximumWidth(60)
-        self.good_frame_checkbox = QCheckBox()
-        self.checkbox_label = QLabel('Auto Find Good Frame')
-
-        layout.addWidget(self.good_frame_label)
-        layout.addWidget(self.good_frame_entry)
-        layout.addWidget(self.good_frame_checkbox)
-        layout.addWidget(self.checkbox_label)
-        layout.addStretch()
-
-        self.good_frame_checkbox.stateChanged.connect(self.checkbox_state_changed)
-
-        self.good_frame_checkbox.setChecked(True)
-
-        self.setLayout(layout)
-
-    def checkbox_state_changed(self):
-        if self.good_frame_checkbox.isChecked():
-            self.good_frame_entry.setEnabled(False)
-            self.good_frame_entry.setText(None)
-        else:
-            self.good_frame_entry.setEnabled(True)
-
-    def get_input_value(self):
-        if self.good_frame_entry.isEnabled():
-            return int(self.good_frame_entry.text())
-        else:
-            return None
-        
-class RotationCheckBox(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        layout = QHBoxLayout()
-
-        self.rotation_label = QLabel('Rotate Data:')
-        self.rotation_checkbox = QCheckBox()
-
-        layout.addWidget(self.rotation_label)
-        layout.addWidget(self.rotation_checkbox)
-
-        self.setLayout(layout)
-        layout.addStretch()
-
-        self.rotation_checkbox.setChecked(True)
-
-    def get_checkbox_state(self):
-        return self.rotation_checkbox.isChecked()        
-
-
-
 if __name__ == "__main__":
     
     path_to_freemocap_session_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
