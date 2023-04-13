@@ -8,10 +8,10 @@ class SkeletonViewersContainer(QWidget):
 
         layout = QHBoxLayout()
 
-        self.raw_skeleton_viewer = SkeletonViewWidget()
+        self.raw_skeleton_viewer = SkeletonViewWidget('Raw data')
         layout.addWidget(self.raw_skeleton_viewer)
 
-        self.processed_skeleton_viewer = SkeletonViewWidget()
+        self.processed_skeleton_viewer = SkeletonViewWidget('Post-processed data')
         layout.addWidget(self.processed_skeleton_viewer)
 
         self.setLayout(layout)

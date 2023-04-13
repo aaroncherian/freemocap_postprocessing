@@ -21,7 +21,7 @@ class TimeSeriesPlotCanvas(FigureCanvasQTAgg):
         self.z_ax = fig.add_subplot(313)
 
         fig.subplots_adjust(hspace=0.4)
-        fig.tight_layout(pad=1.0)
+        fig.tight_layout(pad=2.5)
 
         super(TimeSeriesPlotCanvas, self).__init__(fig)
 
@@ -38,12 +38,12 @@ class TimeSeriesPlotterWidget(QWidget):
 
         self.fig, self.axes_list = self.initialize_skeleton_plot()
 
-        toolbar = NavigationToolbar(self.fig, self);
+        toolbar = NavigationToolbar(self.fig, self)
         self._layout.addWidget(toolbar)
         self._layout.addWidget(self.fig)
 
     def initialize_skeleton_plot(self):
-        fig = TimeSeriesPlotCanvas(self, width=12, height=8, dpi=100)
+        fig = TimeSeriesPlotCanvas(self, width=12, height=9, dpi=100)
         self.x_ax = fig.figure.axes[0]
         self.y_ax = fig.figure.axes[1]
         self.z_ax = fig.figure.axes[2]
@@ -57,7 +57,7 @@ class TimeSeriesPlotterWidget(QWidget):
     
 
     def update_plot(self,marker_to_plot:str, original_freemocap_data:np.ndarray, processed_freemocap_data:np.ndarray, reset_axes = True):
-        axes_names = ['X Axis', 'Y Axis', 'Z Axis']
+        axes_names = ['X Axis (mm)', 'Y Axis (mm)', 'Z Axis (mm)']
 
         mediapipe_index = self.get_mediapipe_indices(marker_to_plot)
 

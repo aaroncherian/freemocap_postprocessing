@@ -17,12 +17,13 @@ class SkeletonViewWidget(QWidget):
 
     session_folder_loaded_signal = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, plot_title:str):
         super().__init__()
 
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
 
+        self.plot_title = plot_title
         self.fig,self.ax = self.initialize_skeleton_plot()
         self._layout.addWidget(self.fig)
 
@@ -32,7 +33,7 @@ class SkeletonViewWidget(QWidget):
         self.current_ylim = None
         self.current_zlim = None
 
-        
+
     def load_skeleton(self,skeleton_3d_data:np.ndarray):
 
         self.skeleton_3d_data = skeleton_3d_data
@@ -45,6 +46,8 @@ class SkeletonViewWidget(QWidget):
     def initialize_skeleton_plot(self):
         fig = Mpl3DPlotCanvas(self, width=5, height=4, dpi=100)
         ax = fig.figure.axes[0]
+
+        ax.set_title(self.plot_title)
         return fig, ax
 
     def reset_skeleton_3d_plot(self):
@@ -71,7 +74,8 @@ class SkeletonViewWidget(QWidget):
             self.ax.set_xlim([self.mx_skel-self.skel_3d_range, self.mx_skel+self.skel_3d_range])
             self.ax.set_ylim([self.my_skel-self.skel_3d_range, self.my_skel+self.skel_3d_range])
             self.ax.set_zlim([self.mz_skel-self.skel_3d_range, self.mz_skel+self.skel_3d_range])
-
+        
+        self.ax.set_title(self.plot_title)
         self.fig.figure.canvas.draw_idle()
 
     def plot_skeleton_bones(self,frame_number):

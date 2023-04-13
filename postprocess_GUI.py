@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox, QTabWidget
+from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox, QTabWidget,QGroupBox
 from PyQt6.QtGui import QIntValidator
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
@@ -11,7 +11,7 @@ from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree, create_filter_parameter_tree
 from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
 from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
-
+from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet
 
 
 
@@ -26,20 +26,26 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         widget = QWidget()
 
+        self.resize(1256, 1029)
+
+        self.setWindowTitle("Freemocap Data Post-processing")
+
         self.tab_widget = QTabWidget()
 
         self.main_menu_tab = MainMenu(freemocap_raw_data=freemocap_raw_data)
         self.tab_widget.addTab(self.main_menu_tab, 'Main Menu')
 
         self.interp_tab = InterpolationMenu(freemocap_raw_data = freemocap_raw_data)
-        self.tab_widget.addTab(self.interp_tab, 'Interpolation Menu')
+        self.tab_widget.addTab(self.interp_tab, 'Interpolation')
         # layout.addWidget(self.main_menu)
 
         self.filter_tab = FilteringMenu(freemocap_raw_data=freemocap_raw_data)
-        self.tab_widget.addTab(self.filter_tab, 'Filtering Menu')
+        self.tab_widget.addTab(self.filter_tab, 'Filtering')
         
         widget.setLayout(layout)
         self.setCentralWidget(self.tab_widget)
+
+        f = 2
 
 
 class InterpolationMenu(QWidget):
@@ -47,17 +53,28 @@ class InterpolationMenu(QWidget):
         super().__init__()
         layout = QVBoxLayout()
 
+        self.setStyleSheet(groupbox_stylesheet)
+
         self.freemocap_raw_data = freemocap_raw_data
         self.processed_freemocap_data = None
 
+        # Timeseries and marker selector groupbox
+        self.time_series_groupbox = QGroupBox("View time series for a selected marker")
+        time_series_layout = QVBoxLayout()
         self.marker_selector_widget = MarkerSelectorWidget()
-        layout.addWidget(self.marker_selector_widget)
-
+        time_series_layout.addWidget(self.marker_selector_widget)
         self.time_series_plotter_widget = TimeSeriesPlotterWidget()
-        layout.addWidget(self.time_series_plotter_widget)
+        time_series_layout.addWidget(self.time_series_plotter_widget)
+        self.time_series_groupbox.setLayout(time_series_layout)
+        layout.addWidget(self.time_series_groupbox)
 
+        #interpolation parameters groupbox 
+        self.interpolation_param_tree_groupbox = QGroupBox("Interpolation Parameters")
+        interpolation_params_layout = QVBoxLayout()
         self.interpolation_param_tree = create_interpolation_parameter_tree()
-        layout.addWidget(self.interpolation_param_tree)
+        interpolation_params_layout.addWidget(self.interpolation_param_tree)
+        self.interpolation_param_tree_groupbox.setLayout(interpolation_params_layout)
+        layout.addWidget(self.interpolation_param_tree_groupbox)
 
         self.run_interpolation_button = QPushButton('Run Interpolation')
         self.run_interpolation_button.clicked.connect(self.run_interpolation_task)
@@ -87,20 +104,30 @@ class InterpolationMenu(QWidget):
 class FilteringMenu(QWidget):
     def __init__(self, freemocap_raw_data:np.ndarray):
         super().__init__()
-        layout = QVBoxLayout()
 
+        self.setStyleSheet(groupbox_stylesheet)
+
+        layout = QVBoxLayout()
         self.freemocap_raw_data = freemocap_raw_data
         self.processed_freemocap_data = None
 
+        # Timeseries and marker selector groupbox
+        self.time_series_groupbox = QGroupBox("View time series for a selected marker")
+        time_series_layout = QVBoxLayout()
         self.marker_selector_widget = MarkerSelectorWidget()
-        layout.addWidget(self.marker_selector_widget)
-
+        time_series_layout.addWidget(self.marker_selector_widget)
         self.time_series_plotter_widget = TimeSeriesPlotterWidget()
-        layout.addWidget(self.time_series_plotter_widget)
+        time_series_layout.addWidget(self.time_series_plotter_widget)
+        self.time_series_groupbox.setLayout(time_series_layout)
+        layout.addWidget(self.time_series_groupbox)
 
-            
+        #filtering parameters groupbox 
+        self.filter_param_tree_groupbox = QGroupBox("Filtering Parameters")
+        filter_params_layout = QVBoxLayout()
         self.filter_param_tree = create_filter_parameter_tree()
-        layout.addWidget(self.filter_param_tree)
+        filter_params_layout.addWidget(self.filter_param_tree)
+        self.filter_param_tree_groupbox.setLayout(filter_params_layout)
+        layout.addWidget(self.filter_param_tree_groupbox)
 
         self.run_filter_button = QPushButton('Run Filter')
         self.run_filter_button.clicked.connect(self.run_filter_task)
@@ -135,18 +162,29 @@ class MainMenu(QWidget):
         super().__init__()
         self.task_list = ['interpolating', 'filtering', 'finding good frame', 'rotating skeleton', 'plotting']
         layout = QVBoxLayout()
+
+        self.setStyleSheet(groupbox_stylesheet)
         
         self.freemocap_raw_data = freemocap_raw_data
         num_frames = freemocap_raw_data.shape[0]
-        self.frame_count_slider = FrameCountSlider(num_frames)
-        layout.addWidget(self.frame_count_slider)
 
+        led_groupbox = QGroupBox('Processing Progress')
         self.led_container = LedContainer(self.task_list)
         self.progress_led_dict, led_layout = self.led_container.create_led_indicators()
-        layout.addLayout(led_layout)
+        led_groupbox.setLayout(led_layout)
+        layout.addWidget(led_groupbox)
 
+        viewer_groupbox = QGroupBox('View your raw and processed mocap data')
+        viewer_layout = QVBoxLayout()
+        
+        self.frame_count_slider = FrameCountSlider(num_frames)
+        viewer_layout.addWidget(self.frame_count_slider)
+        
         self.skeleton_viewers_container = SkeletonViewersContainer()
-        layout.addWidget(self.skeleton_viewers_container)
+        viewer_layout.addWidget(self.skeleton_viewers_container)
+        
+        viewer_groupbox.setLayout(viewer_layout)
+        layout.addWidget(viewer_groupbox)
 
         self.main_tree = create_main_page_parameter_tree()
         layout.addWidget(self.main_tree)
