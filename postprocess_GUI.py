@@ -186,8 +186,12 @@ class MainMenu(QWidget):
         viewer_groupbox.setLayout(viewer_layout)
         layout.addWidget(viewer_groupbox)
 
+        parameter_groupbox = QGroupBox('Processing Parameters')
+        parameter_layout = QVBoxLayout()
         self.main_tree = create_main_page_parameter_tree()
-        layout.addWidget(self.main_tree)
+        parameter_layout.addWidget(self.main_tree)
+        parameter_groupbox.setLayout(parameter_layout)
+        layout.addWidget(parameter_groupbox)
 
         self.connect_signals_to_slots()
 
