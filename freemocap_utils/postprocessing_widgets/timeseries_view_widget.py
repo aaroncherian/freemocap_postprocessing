@@ -80,6 +80,8 @@ class TimeSeriesPlotterWidget(QWidget):
             if dimension == 2:  # put the xlabel only on the last plot
                 ax.set_xlabel('Frame #')
             ax.legend()
+        
+        self.fig.figure.suptitle(f'{marker_to_plot} trajectory')
 
         self.fig.figure.canvas.draw_idle()
 
