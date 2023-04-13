@@ -1,5 +1,5 @@
 from pyqtgraph.parametertree import Parameter,registerParameterType
-from PyQt6.QtWidgets import QWidget, QHBoxLayout,QVBoxLayout, QPushButton, QLabel, QLineEdit, QCheckBox
+
 
 
 
@@ -41,20 +41,25 @@ filter_params = Parameter.create(name='filter_params',type='group', children=fil
 
 
 
-class CustomGoodFrameParam(Parameter):
+class CustomRotationParam(Parameter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.auto_find_good_frame_param = self.child("Good Frame Finder").child('Auto-find Good Frame')
-        self.good_frame_param = self.child("Good Frame Finder").child("Good Frame")
+        self.rotate_data_param = self.child("Rotation Settings").child("Rotate Data")
+        self.auto_find_good_frame_param = self.child("Rotation Settings").child('Auto-find Good Frame')
+        self.good_frame_param = self.child("Rotation Settings").child("Good Frame")
 
+        self.rotate_data_param.sigValueChanged.connect(self.rotate_data_changed)
         self.auto_find_good_frame_param.sigValueChanged.connect(self.auto_find_good_frame_changed)
-        # self.good_frame_param.setOpts(readonly=True)
+
+    def rotate_data_changed(self, value):
+        enabled = value.value()
+        self.auto_find_good_frame_param.setOpts(enabled=enabled)
+        self.good_frame_param.setOpts(enabled=enabled)
 
     def auto_find_good_frame_changed(self, value):
         if value.value():
             self.good_frame_param.setValue("")
             self.good_frame_param.setOpts(readonly=True)
-
         else:
             if not self.good_frame_param.value():
                 self.good_frame_param.setValue("0")
@@ -62,15 +67,17 @@ class CustomGoodFrameParam(Parameter):
 
 
 
-registerParameterType('CustomGoodFrameParam',CustomGoodFrameParam)
-good_frame_finder_settings = [
-    {"name": "Good Frame Finder", "type": "group", "children": [
+rotation_settings = [
+    {"name": "Rotation Settings", "type": "group", "children": [
+        {"name": "Rotate Data", "type": "bool", "value": True},
         {"name": "Instructions", "type": "str", "value": "Uncheck 'Auto-find Good Frame' to type in the good frame manually.", "readonly": True},
         {"name": "Auto-find Good Frame", "type": "bool", "value": True},
         {"name": "Good Frame", "type": "str", "value": "", "step": 1},
     ]}
 ]
-good_frame_finder_params = Parameter.create(name='good_frame_finder_params', type='CustomGoodFrameParam', children=good_frame_finder_settings)
+
+registerParameterType('CustomRotationParam',CustomRotationParam)
+rotation_params = Parameter.create(name='rotation_params', type='CustomRotationParam', children=rotation_settings) #the 'type' here refers to the parameter type we made the line above
 
 
 # class RotationParameter(Parameter):
@@ -83,13 +90,13 @@ good_frame_finder_params = Parameter.create(name='good_frame_finder_params', typ
 #         return child_param.value()
 
 
-rotating_settings = [
-    {"name": "Rotating", "type": "group", "children": [
-        {"name": "Rotate Data:", "type": "bool", "value": True},
-    ]}
-]
+# rotating_settings = [
+#     {"name": "Rotating", "type": "group", "children": [
+#         {"name": "Rotate Data:", "type": "bool", "value": True},
+#     ]}
+# ]
 
-rotating_params = Parameter.create(name='rotating_params', type='group', children=rotating_settings)
+# rotating_params = Parameter.create(name='rotating_params', type='group', children=rotating_settings)
 
 # good_frame_finder_settings = [
 #     {
