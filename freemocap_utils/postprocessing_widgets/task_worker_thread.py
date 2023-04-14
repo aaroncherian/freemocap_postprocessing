@@ -21,11 +21,12 @@ class TaskWorkerThread(QThread):
 
         self.raw_skeleton_data = raw_skeleton_data
         self.available_tasks = {
-            'interpolating': self.interpolate_task,
+            'interpolation': self.interpolate_task,
             'filtering': self.filter_task,
             'finding good frame': self.find_good_frame_task,
-            'rotating skeleton': self.rotate_skeleton_task,
-            'plotting': None
+            'skeleton rotation': self.rotate_skeleton_task,
+            'results visualization': None,
+            'data saved': None
         }
         self.tasks = {task_name: {'function': self.available_tasks[task_name], 'result': None} for task_name in task_list}
         # #create a dictionary from the task list
@@ -36,6 +37,7 @@ class TaskWorkerThread(QThread):
         # self.tasks['finding good frame']['function'] = self.find_good_frame_task
         # self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
         # self.tasks['plotting']['function'] = None
+        results_dictionary = {}
 
     # def update_worker_settings(self, good_frame:int):
     #     self.good_frame = good_frame  
@@ -53,45 +55,53 @@ class TaskWorkerThread(QThread):
         for task_name, task_info in self.tasks.items():
             if task_info['function'] is not None:
                 self.task_running_signal.emit(task_name)
-                task_info['result'] = task_info['function']()
-                self.task_completed_signal.emit(task_name, task_info['result'])
+                is_completed, result = task_info['function']()
+                task_info['result'] = result
+                if is_completed:
+                    self.task_completed_signal.emit(task_name, result)
+
 
         self.all_tasks_finished_signal.emit(self.tasks)
 
     def interpolate_task(self):
         interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
         interpolated_skeleton = interpolate_skeleton_data(self.raw_skeleton_data, method_to_use=interpolation_values_dict['Method'], order=interpolation_values_dict["Order (only used in spline interpolation)"])
-        return interpolated_skeleton
+        return True,interpolated_skeleton
 
     def filter_task(self):
         filter_values_dict = self.get_all_parameter_values(filter_params)
-        filtered_skeleton = filter_skeleton_data(self.tasks['interpolating']['result'], order=filter_values_dict['Order'], cutoff=filter_values_dict['Cutoff Frequency'], sampling_rate=filter_values_dict['Sampling Rate'])
-        return filtered_skeleton
+        filtered_skeleton = filter_skeleton_data(self.tasks['interpolation']['result'], order=filter_values_dict['Order'], cutoff=filter_values_dict['Cutoff Frequency'], sampling_rate=filter_values_dict['Sampling Rate'])
+        return True,filtered_skeleton
 
     def find_good_frame_task(self):
         good_frame_values_dict = self.get_all_parameter_values(rotation_params)
         
         if good_frame_values_dict['Rotate Data']:
+            #if auto find is selected
             if good_frame_values_dict['Auto-find Good Frame']:
                 print(good_frame_values_dict)
                 self.good_frame = find_good_frame(self.tasks['filtering']['result'], skeleton_indices=mediapipe_indices, initial_velocity_guess=.5)
                 rotation_params.auto_find_good_frame_param.setValue(False)
                 rotation_params.good_frame_param.setValue(str(self.good_frame))
+            #if auto find is not, get the user entered good frame
             else:
                 self.good_frame = int(good_frame_values_dict['Good Frame'])
-                print('no values')
+            return True, self.good_frame
         else:
+            #if no rotation is needed, we don't need to run the good frame finder
             self.good_frame = 0
+            return False, self.good_frame
 
-        return self.good_frame
 
     def rotate_skeleton_task(self):
         rotate_values_dict = self.get_all_parameter_values(rotation_params)
         if rotate_values_dict['Rotate Data']:
             origin_aligned_skeleton = align_skeleton_with_origin(self.tasks['filtering']['result'], mediapipe_indices, self.good_frame)[0]
+            return True, origin_aligned_skeleton
         else:
             origin_aligned_skeleton = None
-        return origin_aligned_skeleton
+            return False, origin_aligned_skeleton
+
 
     def get_all_parameter_values(self,parameter_object):
         values = {}
