@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication,QVBoxLayout, QPushButton, QTabWidget,QGroupBox
+from PyQt6.QtGui import QPalette, QColor
 
 
 from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlider
@@ -17,8 +18,7 @@ from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_styleshee
 class MainWindow(QMainWindow):
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
-        layout = QVBoxLayout()
-        widget = QWidget()
+
 
         self.resize(1256, 1029)
 
@@ -36,7 +36,6 @@ class MainWindow(QMainWindow):
         self.filter_tab = FilteringMenu(freemocap_raw_data=freemocap_raw_data)
         self.tab_widget.addTab(self.filter_tab, 'Filtering')
         
-        widget.setLayout(layout)
         self.setCentralWidget(self.tab_widget)
 
         f = 2
@@ -47,6 +46,7 @@ class InterpolationMenu(QWidget):
         super().__init__()
         layout = QVBoxLayout()
 
+        
         self.setStyleSheet(groupbox_stylesheet)
 
         self.freemocap_raw_data = freemocap_raw_data
