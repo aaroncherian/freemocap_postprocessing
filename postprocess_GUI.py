@@ -12,7 +12,21 @@ from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree, create_filter_parameter_tree
 from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
 from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
-from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet
+
+from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet, button_stylesheet
+
+
+class FileManager:
+    def __init__(self, path_to_recording: str):
+        self.path_to_recording = path_to_recording
+        self.data_array_path = self.path_to_recording/'DataArrays'
+    
+    def load_skeleton_data(self):
+        freemocap_raw_data = np.load(self.data_array_path/'mediaPipeSkel_3d.npy')
+        freemocap_raw_data = freemocap_raw_data[:,0:33,:]
+        return freemocap_raw_data
+
+
 
 
 class MainWindow(QMainWindow):
