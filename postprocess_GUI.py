@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy as np
 
-from PyQt6.QtWidgets import QMainWindow, QApplication, QTabWidget
+from PyQt6.QtWidgets import QMainWindow, QApplication, QTabWidget, QWidget, QVBoxLayout
 
 from freemocap_utils.postprocessing_widgets.main_menu import MainMenu
 from freemocap_utils.postprocessing_widgets.interpolation_menu import InterpolationMenu
@@ -20,9 +20,11 @@ class FileManager:
     def save_skeleton_data(self, skeleton_data, skeleton_file_name):
         np.save(self.data_array_path/skeleton_file_name,skeleton_data)
 
-class MainWindow(QMainWindow):
+class PostProcessingGUI(QWidget):
     def __init__(self,path_to_data_folder:Path):
         super().__init__()
+
+        layout = QVBoxLayout()
 
         self.file_manager = FileManager(path_to_recording=path_to_data_folder)
 
@@ -43,14 +45,29 @@ class MainWindow(QMainWindow):
 
         self.filter_tab = FilteringMenu(freemocap_raw_data=freemocap_raw_data)
         self.tab_widget.addTab(self.filter_tab, 'Filtering')
-        
-        self.setCentralWidget(self.tab_widget)
+
+        layout.addWidget(self.tab_widget)
 
         self.main_menu_tab.save_skeleton_data_signal.connect(self.file_manager.save_skeleton_data)
+
+        self.setLayout(layout)
 
 
         f = 2
 
+class MainWindow(QMainWindow):
+    def __init__(self,path_to_data_folder:Path):
+        super().__init__()
+
+        layout = QVBoxLayout()
+
+        widget = QWidget()
+        postprocessing_window = PostProcessingGUI(path_to_data_folder)
+
+        layout.addWidget(postprocessing_window)
+
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
 
 
 if __name__ == "__main__":
