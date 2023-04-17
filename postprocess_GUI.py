@@ -21,7 +21,9 @@ class FileManager:
         self.data_array_path = self.path_to_recording/'DataArrays'
     
     def load_skeleton_data(self):
-        return np.load(self.data_array_path/'mediaPipeSkel_3d.npy')
+        freemocap_raw_data = np.load(self.data_array_path/'mediaPipeSkel_3d.npy')
+        freemocap_raw_data = freemocap_raw_data[:,0:33,:]
+        return freemocap_raw_data
 
     def save_skeleton_data(self, skeleton_data, skeleton_file_name):
         np.save(self.data_array_path/skeleton_file_name,skeleton_data)
