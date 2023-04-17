@@ -62,7 +62,7 @@ class FilteringMenu(QWidget):
         self.marker_selector_widget.marker_to_plot_updated_signal.connect(lambda: self.update_timeseries_plot(reset_axes=True))
     
     def run_filter_task(self):
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolating', 'filtering'])
+        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolation', 'filtering'])
         self.worker_thread.start()
         self.worker_thread.all_tasks_finished_signal.connect(self.handle_filter_result)
 
