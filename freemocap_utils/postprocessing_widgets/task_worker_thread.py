@@ -59,6 +59,9 @@ class TaskWorkerThread(QThread):
                 task_info['result'] = result
                 if is_completed:
                     self.task_completed_signal.emit(task_name, result)
+                else:
+                    self.task_completed_signal.emit(task_name, None)
+
 
 
         self.all_tasks_finished_signal.emit(self.tasks)

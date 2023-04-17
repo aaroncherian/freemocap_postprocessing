@@ -78,10 +78,16 @@ class LedContainer(QWidget):
         return self.progress_led_dict, self.layout
     
     def change_leds_to_tasks_not_started_color(self):
+        #reset all LEDs
         for led_indicator in self.progress_led_dict.values():
             led_indicator.set_not_started_process_color()
 
     
+    def change_led_to_task_not_started_color(self, task):
+        #reset a single LED
+        if task in self.progress_led_dict:
+            self.progress_led_dict[task].set_not_started_process_color()
+
     def change_led_to_task_is_running_color(self,task):
         if task in self.progress_led_dict:
             self.progress_led_dict[task].set_in_process_color()

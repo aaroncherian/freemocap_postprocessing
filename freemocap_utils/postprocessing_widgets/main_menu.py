@@ -118,15 +118,18 @@ class MainMenu(QWidget):
     def handle_task_started(self,task):
         self.led_container.change_led_to_task_is_running_color(task)
 
-    def handle_task_completed(self,task):
-        self.led_container.change_led_to_task_is_finished_color(task)
+    def handle_task_completed(self,task,result=None):
+        if result is None:
+            self.led_container.change_led_to_task_not_started_color(task)
+        else:
+            self.led_container.change_led_to_task_is_finished_color(task)
 
     def save_skeleton_data(self):
         # file_path_to_save = 
         final_skeleton = self.get_final_processed_skeleton()
         skeleton_save_file_name = self.save_entry.text()
         self.save_skeleton_data_signal.emit(final_skeleton,skeleton_save_file_name)
-        self.handle_task_completed('data saved')
+        self.handle_task_completed('data saved', result = True)
 
 
     def get_final_processed_skeleton(self):
@@ -151,4 +154,4 @@ class MainMenu(QWidget):
         self.update_viewer_plots(good_frame)
         self.frame_count_slider.slider.setValue(good_frame)
 
-        self.handle_task_completed('results visualization')
+        self.handle_task_completed('results visualization', result = True)
