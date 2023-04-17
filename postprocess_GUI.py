@@ -16,9 +16,16 @@ from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_styleshee
 
 
 class MainWindow(QMainWindow):
+<<<<<<< Updated upstream
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
 
+=======
+    def __init__(self,freemocap_raw_data):
+        super().__init__()
+
+        # self.file_manager = FileManager(path_to_recording=path_to_data_folder)
+>>>>>>> Stashed changes
 
         self.resize(1256, 1029)
 
@@ -26,6 +33,11 @@ class MainWindow(QMainWindow):
 
         self.tab_widget = QTabWidget()
 
+<<<<<<< Updated upstream
+=======
+        # freemocap_raw_data = self.file_manager.load_skeleton_data()
+
+>>>>>>> Stashed changes
         self.main_menu_tab = MainMenu(freemocap_raw_data=freemocap_raw_data)
         self.tab_widget.addTab(self.main_menu_tab, 'Main Menu')
 
@@ -38,6 +50,12 @@ class MainWindow(QMainWindow):
         
         self.setCentralWidget(self.tab_widget)
 
+<<<<<<< Updated upstream
+=======
+        # self.main_menu_tab.save_skeleton_data_signal.connect(self.file_manager.save_skeleton_data)
+
+
+>>>>>>> Stashed changes
         f = 2
 
 
@@ -266,6 +284,12 @@ if __name__ == "__main__":
 
     freemocap_raw_data = np.load(path_to_freemocap_session_folder/'DataArrays'/'mediaPipeSkel_3d.npy')
     freemocap_raw_data = freemocap_raw_data[:,0:33,:]
+<<<<<<< Updated upstream
+=======
+
+
+    # path_to_data_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
+>>>>>>> Stashed changes
 
     app = QApplication([])
     win = MainWindow(freemocap_raw_data)
