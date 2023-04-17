@@ -1,7 +1,6 @@
 from PyQt6.QtCore import Qt, QPoint, QPointF, QRect
 from PyQt6.QtGui import QPainter, QColor, QBrush, QLinearGradient, QPen
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
-from freemocap_utils.postprocessing_widgets.stylesheet import label_stylesheet
 
 
 class LEDIndicator(QWidget):
@@ -65,7 +64,6 @@ class LedContainer(QWidget):
             self.progress_led_dict[task] = led_indicator
 
             led_label = QLabel(task.capitalize())
-            led_label.setStyleSheet(label_stylesheet)
 
             led_item_layout = QHBoxLayout()
             led_item_layout.addWidget(led_indicator)
