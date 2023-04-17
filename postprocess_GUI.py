@@ -12,10 +12,6 @@ from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
 from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_interpolation_parameter_tree, create_filter_parameter_tree
 from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
 from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
-<<<<<<< HEAD
-from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet
-
-=======
 from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet, button_stylesheet
 
 
@@ -31,7 +27,6 @@ class FileManager:
 
     def save_skeleton_data(self, skeleton_data, skeleton_file_name):
         np.save(self.data_array_path/skeleton_file_name,skeleton_data)
->>>>>>> parent of d70bb3f (Merge branch 'main' into aaron/path_input)
 
 class MainWindow(QMainWindow):
     def __init__(self,path_to_data_folder:Path):
