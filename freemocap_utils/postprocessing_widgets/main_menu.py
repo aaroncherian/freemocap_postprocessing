@@ -26,9 +26,6 @@ class MainMenu(QWidget):
         
         self.freemocap_raw_data = freemocap_raw_data
 
-        led_groupbox = self.create_led_groupbox()
-        layout.addWidget(led_groupbox)
-
         skeleton_viewer_groupbox = self.create_skeleton_viewer_groupbox()
         layout.addWidget(skeleton_viewer_groupbox)
 
@@ -38,6 +35,9 @@ class MainMenu(QWidget):
         self.connect_signals_to_slots()
 
         self.skeleton_viewers_container.plot_raw_skeleton(self.freemocap_raw_data)
+
+        led_groupbox = self.create_led_groupbox()
+        layout.addWidget(led_groupbox)
 
         save_groupbox = self.create_save_widgets()
         layout.addWidget(save_groupbox)
