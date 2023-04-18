@@ -29,23 +29,8 @@ class TaskWorkerThread(QThread):
             'data saved': None
         }
         self.tasks = {task_name: {'function': self.available_tasks[task_name], 'result': None} for task_name in task_list}
-        # #create a dictionary from the task list
-        # self.tasks = {task_name: {'function': None, 'result': None} for task_name in task_list} 
-        # # Assign the task functions here
-        # self.tasks['interpolating']['function'] = self.interpolate_task
-        # self.tasks['filtering']['function'] = self.filter_task
-        # self.tasks['finding good frame']['function'] = self.find_good_frame_task
-        # self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
-        # self.tasks['plotting']['function'] = None
+
         results_dictionary = {}
-
-    # def update_worker_settings(self, good_frame:int):
-    #     self.good_frame = good_frame  
-
-        # if not run_rotate_skeletons:
-        #     self.tasks['rotating skeleton']['function'] = None
-        # else:
-        #     self.tasks['rotating skeleton']['function'] = self.rotate_skeleton_task
 
 
     def run(self):

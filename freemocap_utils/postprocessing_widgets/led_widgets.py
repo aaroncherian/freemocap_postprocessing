@@ -8,10 +8,10 @@ class LEDIndicator(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(15, 15)
-        self.color = QColor(255,68,0)
+        self.color = QColor(156,0,0)
 
     def set_not_started_process_color(self):
-        self.color = QColor(255,68,0)
+        self.color = QColor(156,0,0)
         self.update()
 
     def set_in_process_color(self):
@@ -19,7 +19,7 @@ class LEDIndicator(QWidget):
         self.update()
 
     def set_finished_process_color(self):
-        self.color = QColor(1,88,91)
+        self.color = QColor(0,108,154)
         self.update()
 
     def set_color(self, r,g,b):
