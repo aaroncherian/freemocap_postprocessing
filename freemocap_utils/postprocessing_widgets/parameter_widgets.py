@@ -54,7 +54,6 @@ class CustomRotationParam(Parameter):
             self.good_frame_param.setOpts(readonly=False)
 
 
-
 rotation_settings = [
     {"name": "Rotation", "type": "group", "children": [
         {"name": "Rotate Data", "type": "bool", "value": True},

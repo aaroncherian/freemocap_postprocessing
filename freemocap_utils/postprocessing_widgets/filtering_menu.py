@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QWidget,QVBoxLayout, QPushButton, QGroupBox
 
 
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
-from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_filter_parameter_tree
+from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_filter_parameter_tree, create_filter_page_settings_dict
 from freemocap_utils.postprocessing_widgets.timeseries_view_widget import TimeSeriesPlotterWidget
 from freemocap_utils.postprocessing_widgets.marker_selector_widget import MarkerSelectorWidget
 from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet
@@ -62,7 +62,8 @@ class FilteringMenu(QWidget):
         self.marker_selector_widget.marker_to_plot_updated_signal.connect(lambda: self.update_timeseries_plot(reset_axes=True))
     
     def run_filter_task(self):
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolation', 'filtering'])
+        self.settings_dict = create_filter_page_settings_dict()
+        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolation', 'filtering'], settings=self.settings_dict)
         self.worker_thread.start()
         self.worker_thread.all_tasks_finished_signal.connect(self.handle_filter_result)
 
