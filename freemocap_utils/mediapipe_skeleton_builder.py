@@ -2,6 +2,8 @@ from rich.progress import track
 from pathlib import Path
 import numpy as np
 
+
+
 mediapipe_indices = ['nose',
     'left_eye_inner',
     'left_eye',
@@ -108,12 +110,6 @@ if __name__ == '__main__':
     data_array_folder = 'DataArrays'
     array_name = 'mediaPipeSkel_3d.npy'
 
-    data_array_folder_path = freemocap_data_folder_path / sessionID / data_array_folder
-    skel3d_raw_data = np.load(data_array_folder_path / array_name)
-    skel_repro = np.load(data_array_folder_path/'mediaPipeSkel_reprojErr.npy')
-    #build_skeleton(skel3d_raw_data,mediapipe_indices,mediapipe_connections)
-    #limb_repro = sum_reprojection_error_by_limb(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
 
-    limb_repro = sum_reprojection_error_by_limb_reformat(skel_repro,mediapipe_indices,reprojection_error_mediapipe_connections)
-    #num_tracked_markers = get_number_of_tracked_markers(skel_repro,mediapipe_indices)
+    mediapipe_indices.index('left_heel')
     f = 2

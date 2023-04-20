@@ -81,5 +81,5 @@ if __name__ == "__main__":
                 values[child.name()] = child.value()
         return values
 
-    values = get_all_parameter_values(rotation_params)
+    values = get_all_parameter_values(filter_params)
     f =2 
