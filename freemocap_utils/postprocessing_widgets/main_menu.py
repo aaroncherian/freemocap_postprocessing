@@ -10,7 +10,7 @@ from freemocap_utils.postprocessing_widgets.slider_widget import FrameCountSlide
 from freemocap_utils.postprocessing_widgets.task_worker_thread import TaskWorkerThread
 from freemocap_utils.postprocessing_widgets.skeleton_viewers_container import SkeletonViewersContainer
 from freemocap_utils.postprocessing_widgets.led_widgets import LedContainer
-from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree
+from freemocap_utils.postprocessing_widgets.parameter_tree_builder import create_main_page_parameter_tree, create_main_page_settings_dict
 from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_stylesheet, button_stylesheet
 
 
@@ -108,8 +108,8 @@ class MainMenu(QWidget):
         
     def postprocess_data(self):
         self.led_container.change_leds_to_tasks_not_started_color()
-
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=self.task_list)
+        settings_dict = create_main_page_settings_dict()
+        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=self.task_list, settings=settings_dict)
         self.worker_thread.start()
         self.worker_thread.task_running_signal.connect(self.handle_task_started)
         self.worker_thread.task_completed_signal.connect(self.handle_task_completed)
