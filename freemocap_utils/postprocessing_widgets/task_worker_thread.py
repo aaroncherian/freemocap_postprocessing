@@ -15,7 +15,7 @@ class TaskWorkerThread(QThread):
     task_running_signal = pyqtSignal(str)
     task_completed_signal = pyqtSignal(str, object)
     all_tasks_finished_signal = pyqtSignal(object) 
-    def __init__(self, raw_skeleton_data:np.ndarray, task_list:list):
+    def __init__(self, raw_skeleton_data:np.ndarray, task_list:list, settings:dict):
         super().__init__()
         # self.good_frame = True
 
@@ -30,6 +30,7 @@ class TaskWorkerThread(QThread):
         }
         self.tasks = {task_name: {'function': self.available_tasks[task_name], 'result': None} for task_name in task_list}
 
+        self.settings = settings
         results_dictionary = {}
 
 
@@ -52,22 +53,21 @@ class TaskWorkerThread(QThread):
         self.all_tasks_finished_signal.emit(self.tasks)
 
     def interpolate_task(self):
-        interpolation_values_dict = self.get_all_parameter_values(interpolation_params)
-        interpolated_skeleton = interpolate_skeleton_data(self.raw_skeleton_data, method_to_use=interpolation_values_dict['Method'], order=interpolation_values_dict["Order (only used in spline interpolation)"])
+        interpolation_values_dict = self.settings['Interpolation']
+        interpolated_skeleton = interpolate_skeleton_data(self.raw_skeleton_data, method_to_use=interpolation_values_dict['Method'], order=interpolation_values_dict["Order"])
         return True,interpolated_skeleton
 
     def filter_task(self):
-        filter_values_dict = self.get_all_parameter_values(filter_params)
+        filter_values_dict = self.settings['Filtering']
         filtered_skeleton = filter_skeleton_data(self.tasks['interpolation']['result'], order=filter_values_dict['Order'], cutoff=filter_values_dict['Cutoff Frequency'], sampling_rate=filter_values_dict['Sampling Rate'])
         return True,filtered_skeleton
 
     def find_good_frame_task(self):
-        good_frame_values_dict = self.get_all_parameter_values(rotation_params)
+        good_frame_values_dict = self.settings['Rotation']
         
         if good_frame_values_dict['Rotate Data']:
             #if auto find is selected
             if good_frame_values_dict['Auto-find Good Frame']:
-                print(good_frame_values_dict)
                 self.good_frame = find_good_frame(self.tasks['filtering']['result'], skeleton_indices=mediapipe_indices, initial_velocity_guess=.5)
                 rotation_params.auto_find_good_frame_param.setValue(False)
                 rotation_params.good_frame_param.setValue(str(self.good_frame))
@@ -82,7 +82,7 @@ class TaskWorkerThread(QThread):
 
 
     def rotate_skeleton_task(self):
-        rotate_values_dict = self.get_all_parameter_values(rotation_params)
+        rotate_values_dict = self.settings['Rotation']
         if rotate_values_dict['Rotate Data']:
             origin_aligned_skeleton = align_skeleton_with_origin(self.tasks['filtering']['result'], mediapipe_indices, self.good_frame)[0]
             return True, origin_aligned_skeleton
