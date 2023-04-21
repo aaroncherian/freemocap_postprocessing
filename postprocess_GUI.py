@@ -10,10 +10,12 @@ from freemocap_utils.postprocessing_widgets.filtering_menu import FilteringMenu
 class FileManager:
     def __init__(self, path_to_recording: str):
         self.path_to_recording = path_to_recording
-        self.data_array_path = self.path_to_recording/'DataArrays'
+        #self.data_array_path = self.path_to_recording/'DataArrays'
+        self.data_array_path = self.path_to_recording/'output_data'/'raw_data'
     
     def load_skeleton_data(self):
-        freemocap_raw_data = np.load(self.data_array_path/'mediaPipeSkel_3d.npy')
+        # freemocap_raw_data = np.load(self.data_array_path/'mediaPipeSkel_3d.npy')
+        freemocap_raw_data = np.load(self.data_array_path/'mediapipe3dData_numFrames_numTrackedPoints_spatialXYZ.npy')
         freemocap_raw_data = freemocap_raw_data[:,0:33,:]
         return freemocap_raw_data
 
@@ -83,7 +85,7 @@ if __name__ == "__main__":
     # freemocap_raw_data = freemocap_raw_data[:,0:33,:]
 
 
-    path_to_data_folder = Path(r'D:\ValidationStudy2022\FreeMocap_Data\sesh_2022-05-24_16_10_46_JSM_T1_WalkRun')
+    path_to_data_folder = Path(r'D:\footropter_pilot_04_19_23\1.0_recordings\recordings_calib_2\sesh_2023-04-19_16_10_34_treadmill_JSM')
 
     app = QApplication([])
     win = MainWindow(path_to_data_folder)
