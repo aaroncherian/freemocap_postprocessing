@@ -109,11 +109,17 @@ class MainMenu(QWidget):
     def postprocess_data(self):
         self.led_container.change_leds_to_tasks_not_started_color()
         settings_dict = create_main_page_settings_dict()
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=self.task_list, settings=settings_dict)
+        self.worker_thread = TaskWorkerThread(
+            raw_skeleton_data=self.freemocap_raw_data,
+            task_list=self.task_list,
+            settings=settings_dict,
+            task_running_callback=self.handle_task_started,
+            task_completed_callback=self.handle_task_completed,
+            all_tasks_finished_callback=self.handle_plotting,
+        )   
+             
         self.worker_thread.start()
-        self.worker_thread.task_running_signal.connect(self.handle_task_started)
-        self.worker_thread.task_completed_signal.connect(self.handle_task_completed)
-        self.worker_thread.all_tasks_finished_signal.connect(self.handle_plotting)
+
 
     def handle_task_started(self,task):
         self.led_container.change_led_to_task_is_running_color(task)
