@@ -16,7 +16,7 @@ from freemocap_utils.postprocessing_widgets.stylesheet import groupbox_styleshee
 
 class MainMenu(QWidget):
     
-    save_skeleton_data_signal = pyqtSignal(object,object)
+    save_skeleton_data_signal = pyqtSignal(object,object,object)
     def __init__(self,freemocap_raw_data:np.ndarray):
         super().__init__()
         self.task_list = ['interpolation', 'filtering', 'finding good frame', 'skeleton rotation', 'results visualization', 'data saved']
@@ -108,11 +108,11 @@ class MainMenu(QWidget):
         
     def postprocess_data(self):
         self.led_container.change_leds_to_tasks_not_started_color()
-        settings_dict = create_main_page_settings_dict()
+        self.settings_dict = create_main_page_settings_dict()
         self.worker_thread = TaskWorkerThread(
             raw_skeleton_data=self.freemocap_raw_data,
             task_list=self.task_list,
-            settings=settings_dict,
+            settings=self.settings_dict,
             task_running_callback=self.handle_task_started,
             task_completed_callback=self.handle_task_completed,
             all_tasks_finished_callback=self.handle_plotting,
@@ -134,7 +134,7 @@ class MainMenu(QWidget):
         # file_path_to_save = 
         final_skeleton = self.get_final_processed_skeleton()
         skeleton_save_file_name = self.save_entry.text()
-        self.save_skeleton_data_signal.emit(final_skeleton,skeleton_save_file_name)
+        self.save_skeleton_data_signal.emit(final_skeleton,skeleton_save_file_name,self.settings_dict)
         self.handle_task_completed('data saved', result = True)
 
 

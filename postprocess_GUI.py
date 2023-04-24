@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QTabWidget, QWidget, QVBo
 from freemocap_utils.postprocessing_widgets.main_menu import MainMenu
 from freemocap_utils.postprocessing_widgets.interpolation_menu import InterpolationMenu
 from freemocap_utils.postprocessing_widgets.filtering_menu import FilteringMenu
-
+import toml
 class FileManager:
     def __init__(self, path_to_recording: str):
         self.path_to_recording = path_to_recording
@@ -19,8 +19,15 @@ class FileManager:
         freemocap_raw_data = freemocap_raw_data[:,0:33,:]
         return freemocap_raw_data
 
-    def save_skeleton_data(self, skeleton_data, skeleton_file_name):
+    def save_skeleton_data(self, skeleton_data:np.ndarray, skeleton_file_name:str, settings_dict:dict):
         np.save(self.data_array_path/skeleton_file_name,skeleton_data)
+
+        output_toml_name = self.data_array_path/'postprocessing_settings.toml'
+        toml_string = toml.dumps(settings_dict)
+
+        with open(output_toml_name, 'w') as toml_file:
+            toml_file.write(toml_string)
+
 
 class PostProcessingGUI(QWidget):
     def __init__(self,path_to_data_folder:Path):
