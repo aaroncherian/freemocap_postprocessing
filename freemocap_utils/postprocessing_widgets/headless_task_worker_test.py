@@ -33,14 +33,6 @@ default_settings = {
 
 
 task_list = ['interpolation', 'filtering', 'finding good frame','skeleton rotation']
-worker_thread = TaskWorkerThread(raw_skeleton_data=freemocap_raw_data, task_list=task_list, settings=default_settings)
-worker_thread.task_completed_signal.connect(handle_task_completed)
-
-
-# Create a QCoreApplication instance to run the event loop
-app = QCoreApplication(sys.argv)
+worker_thread = TaskWorkerThread(raw_skeleton_data=freemocap_raw_data, task_list=task_list, settings=default_settings,task_completed_callback=handle_task_completed)
 
 worker_thread.start()
-
-# Run the event loop
-app.exec()
