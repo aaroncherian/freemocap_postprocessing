@@ -7,17 +7,14 @@ from freemocap_utils.postprocessing_widgets.postprocessing_functions.rotate_skel
 
 from freemocap_utils.mediapipe_skeleton_builder import mediapipe_indices
 
-from PyQt6.QtCore import QThread, pyqtSignal
 
 import numpy as np
 
-class TaskWorkerThread(QThread):
-    task_running_signal = pyqtSignal(str)
-    task_completed_signal = pyqtSignal(str, object)
-    all_tasks_finished_signal = pyqtSignal(object) 
-    def __init__(self, raw_skeleton_data:np.ndarray, task_list:list, settings:dict):
+import threading
+
+class TaskWorkerThread(threading.Thread):
+    def __init__(self, raw_skeleton_data:np.ndarray, task_list:list, settings:dict, task_running_callback=None, task_completed_callback=None, all_tasks_finished_callback=None):
         super().__init__()
-        # self.good_frame = True
 
         self.raw_skeleton_data = raw_skeleton_data
         self.available_tasks = {
@@ -33,6 +30,11 @@ class TaskWorkerThread(QThread):
         self.settings = settings
         results_dictionary = {}
 
+        self.task_running_callback = task_running_callback
+        self.task_completed_callback = task_completed_callback
+        self.all_tasks_finished_callback = all_tasks_finished_callback
+
+
 
     def run(self):
         for task_info in self.tasks.values(): #clear any previous results 
@@ -40,17 +42,21 @@ class TaskWorkerThread(QThread):
 
         for task_name, task_info in self.tasks.items():
             if task_info['function'] is not None:
-                self.task_running_signal.emit(task_name)
+                if self.task_running_callback is not None:
+                    self.task_running_callback(task_name)
+                
                 is_completed, result = task_info['function']()
+                
                 task_info['result'] = result
                 if is_completed:
-                    self.task_completed_signal.emit(task_name, result)
+                    if self.task_completed_callback is not None:
+                        self.task_completed_callback(task_name, result)
                 else:
-                    self.task_completed_signal.emit(task_name, None)
+                    if self.task_completed_callback is not None:
+                        self.task_completed_callback(task_name, None)
 
-
-
-        self.all_tasks_finished_signal.emit(self.tasks)
+        if self.all_tasks_finished_callback is not None:
+            self.all_tasks_finished_callback(self.tasks)
 
     def interpolate_task(self):
         interpolation_values_dict = self.settings['Interpolation']

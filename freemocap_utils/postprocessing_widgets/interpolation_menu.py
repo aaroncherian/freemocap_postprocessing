@@ -61,9 +61,12 @@ class InterpolationMenu(QWidget):
 
     def run_interpolation_task(self):
         self.settings_dict = create_interpolation_page_settings_dict()
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolation'], settings=self.settings_dict)
-        self.worker_thread.start()
-        self.worker_thread.all_tasks_finished_signal.connect(self.handle_interpolation_result)
+        self.worker_thread = TaskWorkerThread(
+            raw_skeleton_data=self.freemocap_raw_data,
+            task_list= ['interpolation'],
+            settings=self.settings_dict,
+            all_tasks_finished_callback=self.handle_interpolation_result)        
+        self.worker_thread.start()   
 
     def handle_interpolation_result(self, task_results: dict):
         self.processed_freemocap_data = task_results['interpolation']['result']

@@ -63,9 +63,13 @@ class FilteringMenu(QWidget):
     
     def run_filter_task(self):
         self.settings_dict = create_filter_page_settings_dict()
-        self.worker_thread = TaskWorkerThread(raw_skeleton_data=self.freemocap_raw_data, task_list=['interpolation', 'filtering'], settings=self.settings_dict)
+        self.worker_thread = TaskWorkerThread(
+            raw_skeleton_data=self.freemocap_raw_data,
+            task_list= ['interpolation', 'filtering'],
+            settings=self.settings_dict,
+            all_tasks_finished_callback=self.handle_filter_result)        
         self.worker_thread.start()
-        self.worker_thread.all_tasks_finished_signal.connect(self.handle_filter_result)
+
 
     def handle_filter_result(self, task_results: dict):
         self.processed_freemocap_data = task_results['filtering']['result']
