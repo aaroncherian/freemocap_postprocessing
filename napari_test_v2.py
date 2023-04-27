@@ -5,16 +5,15 @@ from pathlib import Path
 import cv2
 from rich.progress import track
 
-def calculate_joint_velocities(joint_positions):
-    # Calculate differences between consecutive frames
-    diffs = np.diff(joint_positions, axis=0)
-
-    # Calculate the magnitude of the velocity vector for each joint
-    velocities = np.linalg.norm(diffs, axis=-1)
+def calculate_joint_acceleration(joint_positions):
+    velocities = np.diff(joint_positions, axis=0)
+    accelerations = np.diff(velocities, axis=0)
+    magnitudes = np.linalg.norm(accelerations, axis=-1)
+    return magnitudes
 
     
 
-    return velocities
+
 
 
 # def calculate_joint_velocities(joint_positions):
@@ -65,7 +64,8 @@ joint_positions = freemocap_adjusted
 num_frames = freemocap_single_cam.shape[0]
 num_joints = freemocap_single_cam.shape[1]
 
-joint_velocities = calculate_joint_velocities(joint_positions)
+joint_acceleration = calculate_joint_acceleration(joint_positions)
+
 
 # def detect_tracking_errors(joint_velocities, threshold):
 #     errors = joint_velocities > threshold
@@ -83,8 +83,9 @@ def detect_tracking_errors(joint_velocities, threshold):
 
 
 
-velocity_threshold = 40
-tracking_errors = detect_tracking_errors(joint_velocities, velocity_threshold)
+acceleration_threshold = 35
+
+tracking_errors = detect_tracking_errors(joint_acceleration, acceleration_threshold)
 
 f =2 
 
@@ -127,9 +128,10 @@ def update_and_recompute_errors():
         joint_positions[i] = points_layer.data
 
     # Recompute joint velocities and tracking errors for the window around the current frame
-    joint_velocities_window = calculate_joint_velocities(joint_positions[start_frame:end_frame + 1])
-    tracking_errors[start_frame:end_frame] = detect_tracking_errors(joint_velocities_window[:], velocity_threshold)
-
+    joint_velocities_window = calculate_joint_acceleration(joint_positions[start_frame:end_frame + 1])
+    error_start_frame = start_frame + 1
+    error_end_frame = end_frame
+    tracking_errors[error_start_frame:error_end_frame] = detect_tracking_errors(joint_velocities_window[:], acceleration_threshold)
     # Set the slider value back to the current frame
     slider.setValue(current_frame)
 
