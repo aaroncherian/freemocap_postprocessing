@@ -83,7 +83,7 @@ def detect_tracking_errors(joint_velocities, threshold):
 
 
 
-acceleration_threshold = 35
+acceleration_threshold = 30
 
 tracking_errors = detect_tracking_errors(joint_acceleration, acceleration_threshold)
 
@@ -138,7 +138,12 @@ def update_and_recompute_errors():
     # Update the marker colors based on the new tracking errors
     update_joint_positions(slider.value())
 
-
+def save_and_quit():
+    global joint_positions
+    # np.save("updated_joint_positions.npy", joint_positions)
+    viewer.close()
+    print(joint_positions.shape)
+    f = 2
 
     # current_frame = slider.value()
     # # Update joint positions based on the current points in the points_layer
@@ -194,7 +199,11 @@ update_button = QPushButton("Update and Recompute Errors")
 update_button.clicked.connect(update_and_recompute_errors)
 viewer.window.add_dock_widget(update_button, area='bottom', name='Update Button')
 
+save_and_quit_button = QPushButton("Save and Quit")
+save_and_quit_button.clicked.connect(save_and_quit)
+viewer.window.add_dock_widget(save_and_quit_button, area='bottom', name='Save and Quit Button')
 
 
 # Start Napari GUI event loop
 napari.run()
+
